@@ -1,0 +1,65 @@
+<svg width="1200" height="500" viewBox="0 0 1200 500" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">SuiMesh action trace flow</title>
+  <desc id="desc">A heavy action moves from intent to proposal, policy decision, claim, execution receipt, and audit event.</desc>
+  <rect width="1200" height="500" rx="28" fill="#07111F"/>
+  <text x="600" y="58" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="32" font-weight="800" text-anchor="middle">Heavy Action Trace</text>
+  <text x="600" y="90" fill="#A8C4DC" font-family="Inter, Arial, sans-serif" font-size="18" text-anchor="middle">High-stakes actions become recoverable communication state, not hidden backend logs.</text>
+  <g transform="translate(54 160)">
+    <rect width="132" height="76" rx="16" fill="#102843" stroke="#67A9FF"/>
+    <text x="66" y="35" fill="#EAF4FF" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">Intent</text>
+    <text x="66" y="58" fill="#93B7D6" font-family="Inter, Arial, sans-serif" font-size="13" text-anchor="middle">user goal</text>
+  </g>
+  <g transform="translate(206 160)">
+    <rect width="132" height="76" rx="16" fill="#102843" stroke="#67A9FF"/>
+    <text x="66" y="35" fill="#EAF4FF" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">Proposal</text>
+    <text x="66" y="58" fill="#93B7D6" font-family="Inter, Arial, sans-serif" font-size="13" text-anchor="middle">agent plan</text>
+  </g>
+  <g transform="translate(358 160)">
+    <rect width="132" height="76" rx="16" fill="#102843" stroke="#67A9FF"/>
+    <text x="66" y="35" fill="#EAF4FF" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">PTB</text>
+    <text x="66" y="58" fill="#93B7D6" font-family="Inter, Arial, sans-serif" font-size="13" text-anchor="middle">source of truth</text>
+  </g>
+  <g transform="translate(510 160)">
+    <rect width="132" height="76" rx="16" fill="#102843" stroke="#46D5B5"/>
+    <text x="66" y="35" fill="#EAF4FF" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">Inspect</text>
+    <text x="66" y="58" fill="#93B7D6" font-family="Inter, Arial, sans-serif" font-size="13" text-anchor="middle">facts</text>
+  </g>
+  <g transform="translate(662 160)">
+    <rect width="132" height="76" rx="16" fill="#102843" stroke="#46D5B5"/>
+    <text x="66" y="35" fill="#EAF4FF" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">Policy</text>
+    <text x="66" y="58" fill="#93B7D6" font-family="Inter, Arial, sans-serif" font-size="13" text-anchor="middle">decision</text>
+  </g>
+  <g transform="translate(814 160)">
+    <rect width="132" height="76" rx="16" fill="#102843" stroke="#F6C85F"/>
+    <text x="66" y="35" fill="#EAF4FF" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">Claim</text>
+    <text x="66" y="58" fill="#93B7D6" font-family="Inter, Arial, sans-serif" font-size="13" text-anchor="middle">executor lock</text>
+  </g>
+  <g transform="translate(966 160)">
+    <rect width="132" height="76" rx="16" fill="#102843" stroke="#F6C85F"/>
+    <text x="66" y="35" fill="#EAF4FF" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">Receipt</text>
+    <text x="66" y="58" fill="#93B7D6" font-family="Inter, Arial, sans-serif" font-size="13" text-anchor="middle">execution proof</text>
+  </g>
+  <g>
+    <path d="M186 198 H206" stroke="#8AA8C0" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M338 198 H358" stroke="#8AA8C0" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M490 198 H510" stroke="#8AA8C0" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M642 198 H662" stroke="#8AA8C0" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M794 198 H814" stroke="#8AA8C0" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M946 198 H966" stroke="#8AA8C0" stroke-width="3" marker-end="url(#arrow)"/>
+  </g>
+  <g>
+    <rect x="254" y="330" width="278" height="68" rx="18" fill="#0D332F" stroke="#46D5B5"/>
+    <text x="393" y="357" fill="#D6FFF4" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">Walrus</text>
+    <text x="393" y="381" fill="#9FE8D8" font-family="Inter, Arial, sans-serif" font-size="14" text-anchor="middle">encrypted details and audit archive</text>
+    <rect x="668" y="330" width="278" height="68" rx="18" fill="#0E2A49" stroke="#67A9FF"/>
+    <text x="807" y="357" fill="#DDEEFF" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">Sui</text>
+    <text x="807" y="381" fill="#A9CFFF" font-family="Inter, Arial, sans-serif" font-size="14" text-anchor="middle">refs, hashes, status, claim state</text>
+  </g>
+  <path d="M393 330 C392 286 424 254 424 236" stroke="#46D5B5" stroke-width="3" stroke-dasharray="8 8"/>
+  <path d="M807 330 C805 282 880 254 880 236" stroke="#67A9FF" stroke-width="3" stroke-dasharray="8 8"/>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto">
+      <path d="M0 0 L7 3 L0 6 Z" fill="#8AA8C0"/>
+    </marker>
+  </defs>
+</svg>
