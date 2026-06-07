@@ -1,0 +1,7 @@
+[package]
+name = "suimesh_trace"
+version = "0.1.0"
+edition = "2024.beta"
+
+[addresses]
+suimesh_trace = "0x0"

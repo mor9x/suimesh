@@ -1,0 +1,10 @@
+node_modules/
+.DS_Store
+.env
+.env.*
+*.log
+dist/
+coverage/
+.turbo/
+.cache/
+contracts/**/build/

@@ -1,0 +1,36 @@
+{
+  "name": "suimesh",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "SuiMesh v0.1 protocol SDK: agent action communication state on Sui.",
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "check": "bun run typecheck && bun test",
+    "check:strict": "tsc --noEmit --noUnusedLocals --noUnusedParameters && bun test",
+    "test:move": "cd contracts/suimesh_trace && sui move test",
+    "audit:deps": "bun audit && bun pm untrusted",
+    "example:minimal": "bun run examples/minimal/minimal.ts",
+    "test:live:messaging": "bun run scripts/live/sui-stack-messaging-live.ts",
+    "test:live:messaging:remote": "SUIMESH_REQUIRE_REMOTE_RELAYER=1 bun run scripts/live/sui-stack-messaging-live.ts",
+    "test:live:heavy": "bun run scripts/live/heavy-action-live.ts",
+    "test:live:walrus": "bun run scripts/live/walrus-archive-live.ts",
+    "test:live:business": "bun run scripts/live/full-business-live.ts",
+    "test:live:agent-proposal": "bun run scripts/live/openai-agent-proposal-live.ts",
+    "test:live:agent-proposal:verify": "bun run scripts/live/verify-agent-proposal-live.ts",
+    "test:live:full-regression": "bun run scripts/live/full-regression-live.ts"
+  },
+  "dependencies": {
+    "@mysten/bcs": "2.0.5",
+    "@mysten/seal": "1.1.3",
+    "@mysten/sui": "2.17.0",
+    "@mysten/sui-groups": "0.0.1",
+    "@mysten/sui-stack-messaging": "0.0.2",
+    "@noble/hashes": "1.8.0"
+  },
+  "devDependencies": {
+    "@types/bun": "1.3.14",
+    "typescript": "6.0.3"
+  }
+}
