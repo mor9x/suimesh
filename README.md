@@ -130,7 +130,7 @@ const client = createSuiMeshClient();
 
 const message = await client.light.sendMessage({
   sessionId: "session-1",
-  actor: { role: "user", id: "alice" },
+  actor: client.actors.user("alice"),
   content: "Prepare a 1 MIST transfer proposal."
 });
 

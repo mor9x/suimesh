@@ -2,14 +2,14 @@ import {
   createDefaultPolicy,
   createSuiMeshClient,
   encodeInspectablePtb,
-  type ActionManifest
+  policyRules
 } from "../../src/index.ts";
 
 const client = createSuiMeshClient();
 
-const user = { role: "user" as const, id: "alice", address: "0xalice" };
-const agent = { role: "agent" as const, id: "demo-agent", address: "0xagent" };
-const policyActor = { role: "policy" as const, id: "default-policy" };
+const user = client.actors.user("alice", { address: "0xalice" });
+const agent = client.actors.agent("demo-agent", { address: "0xagent" });
+const policyActor = client.actors.policy("default-policy");
 
 const light = await client.light.sendMessage({
   sessionId: "ses_minimal",
@@ -27,19 +27,15 @@ const ptbBytes = encodeInspectablePtb([
   }
 ]);
 
-const manifest: Omit<ActionManifest, "actionType" | "ptbHash"> = {
-  actionId: "act_minimal",
+const manifest = client.manifest.transfer({
   traceId: "tr_minimal",
-  semanticType: "transfer",
-  template: "transfer",
+  amount: "10",
+  coinType: "SUI",
+  recipient: "0xbob",
+  objectIds: ["0xcoin"],
   summary: "Send 10 SUI to Bob",
-  riskLevel: "medium",
-  valueAtRisk: { amount: "10", coinType: "SUI" },
-  objectsTouched: ["0xcoin"],
-  policyRequirements: ["max_value_at_risk", "recipient_allowlist"],
-  expiresAtMs: Date.now() + 60_000,
   idempotencyKey: "idem_minimal"
-};
+});
 
 const proposed = await client.actions.proposePtb({
   sessionId: "ses_minimal",
@@ -54,9 +50,9 @@ const simulated = await client.actions.simulate(proposed.action);
 const decision = client.policy.evaluate({
   policy: createDefaultPolicy({
     rules: [
-      { name: "max_value_at_risk", params: { maxAmount: "20", coinType: "SUI" } },
-      { name: "recipient_allowlist", params: { recipients: ["0xbob"] } },
-      { name: "expiration_check", params: {} }
+      policyRules.maxValueAtRisk({ maxAmount: "20", coinType: "SUI" }),
+      policyRules.recipientAllowlist(["0xbob"]),
+      policyRules.expirationCheck()
     ]
   }),
   facts: simulated.facts,

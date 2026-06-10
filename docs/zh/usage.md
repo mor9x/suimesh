@@ -57,12 +57,36 @@ const client = createSuiMeshClient({
 | `policyEngine` | 用策略评估 facts。 |
 | `traceGuard` | Anchor、claim、complete，并阻止重复执行。 |
 
+## 友好的 Builder
+
+应用代码不应该到处手写协议字符串。优先使用 SDK builder 和导出的常量：
+
+```ts
+import { SuiMeshConstants, policyRules } from "./src/index.ts";
+
+const user = client.actors.user("alice", { address: "0xalice" });
+const agent = client.actors.agent("agent-1", { address: "0xagent" });
+
+const manifest = client.manifest.transfer({
+  traceId: "tr_demo",
+  amount: "10",
+  coinType: "SUI",
+  recipient: "0xbob",
+});
+
+const rule = policyRules.maxValueAtRisk({ maxAmount: "20", coinType: "SUI" });
+
+console.log(SuiMeshConstants.eventTypes.SuiPtbAction);
+```
+
+底层 protocol types 仍然会导出给高级集成使用，但默认推荐使用这些 builder。
+
 ## 发送 Light Context
 
 普通对话和上下文走 Light Path。
 
 ```ts
-const user = { role: "user" as const, id: "alice", address: "0xalice" };
+const user = client.actors.user("alice", { address: "0xalice" });
 
 const light = await client.light.sendMessage({
   sessionId: "ses_demo",
@@ -89,11 +113,10 @@ action_type = sui.ptb.v1
 import {
   createSuiMeshClient,
   encodeInspectablePtb,
-  type ActionManifest,
 } from "./src/index.ts";
 
 const client = createSuiMeshClient();
-const agent = { role: "agent" as const, id: "agent-1", address: "0xagent" };
+const agent = client.actors.agent("agent-1", { address: "0xagent" });
 
 const ptbBytes = encodeInspectablePtb([
   {
@@ -105,19 +128,16 @@ const ptbBytes = encodeInspectablePtb([
   },
 ]);
 
-const manifest: Omit<ActionManifest, "actionType" | "ptbHash"> = {
+const manifest = client.manifest.transfer({
   actionId: "act_demo",
   traceId: "tr_demo",
-  semanticType: "transfer",
-  template: "transfer",
-  summary: "Send 10 SUI to Bob",
-  riskLevel: "medium",
-  valueAtRisk: { amount: "10", coinType: "SUI" },
-  objectsTouched: ["0xcoin"],
-  policyRequirements: ["max_value_at_risk", "recipient_allowlist"],
+  amount: "10",
+  coinType: "SUI",
+  recipient: "0xbob",
+  objectIds: ["0xcoin"],
   expiresAtMs: Date.now() + 60_000,
   idempotencyKey: "idem_demo_transfer",
-};
+});
 
 const proposed = await client.actions.proposePtb({
   sessionId: "ses_demo",
@@ -142,20 +162,20 @@ Policy approves facts, not prose.
 ## Inspect、Simulate 和 Policy
 
 ```ts
-import { createDefaultPolicy } from "./src/index.ts";
+import { createDefaultPolicy, policyRules } from "./src/index.ts";
 
 const simulated = await client.actions.simulate(proposed.action);
 
 const decision = client.policy.evaluate({
   policy: createDefaultPolicy({
     rules: [
-      { name: "max_value_at_risk", params: { maxAmount: "20", coinType: "SUI" } },
-      { name: "recipient_allowlist", params: { recipients: ["0xbob"] } },
-      { name: "expiration_check", params: {} },
+      policyRules.maxValueAtRisk({ maxAmount: "20", coinType: "SUI" }),
+      policyRules.recipientAllowlist(["0xbob"]),
+      policyRules.expirationCheck(),
     ],
   }),
   facts: simulated.facts,
-  decider: { role: "policy", id: "default-policy" },
+  decider: client.actors.policy("default-policy"),
 });
 ```
 
@@ -170,7 +190,7 @@ const recordedDecision = await client.policy.evaluateAndRecord({
   traceId: "tr_demo",
   policy: createDefaultPolicy(),
   facts: simulated.facts,
-  decider: { role: "policy", id: "default-policy" },
+  decider: client.actors.policy("default-policy"),
   previousEventHash: proposed.envelope.eventHash,
 });
 ```
@@ -191,7 +211,7 @@ requires_confirmation
 const anchor = await client.trace.anchorAndRecord({
   sessionId: "ses_demo",
   traceId: "tr_demo",
-  actor: { role: "system", id: "trace-guard" },
+  actor: client.actors.system("trace-guard"),
   actionHash: simulated.facts.actionHash,
   decisionHash: recordedDecision.envelope.eventHash,
   authorizedExecutor: "0xexecutor",
@@ -202,7 +222,7 @@ const anchor = await client.trace.anchorAndRecord({
 const claim = await client.trace.claimAndRecord({
   sessionId: "ses_demo",
   traceId: "tr_demo",
-  actor: { role: "executor", id: "executor-1", address: "0xexecutor" },
+  actor: client.actors.executor("executor-1", { address: "0xexecutor" }),
   actionHash: simulated.facts.actionHash,
   decision: recordedDecision.decision,
   previousEventHash: anchor.envelope.eventHash,
@@ -214,7 +234,7 @@ const receipt = await client.trace.executeApprovedAndRecord({
   actionHash: simulated.facts.actionHash,
   claim: claim.claim,
   decision: recordedDecision.decision,
-  executor: { role: "executor", id: "executor-1", address: "0xexecutor" },
+  executor: client.actors.executor("executor-1", { address: "0xexecutor" }),
   previousEventHash: claim.envelope.eventHash,
   execute: async () => ({
     txDigest: "demo_tx_digest",

@@ -1,5 +1,11 @@
 import {
+  ActorRoles,
+  Encodings,
+  EventTypes,
   SUI_PTB_ACTION_TYPE,
+  SuiMeshConstants,
+  actionManifests,
+  actors,
   type ActionManifest,
   type Actor,
   type EventEnvelope,
@@ -22,7 +28,7 @@ import {
   type PtbInspector,
   type PtbSimulator
 } from "../../ptb-inspector/src/index.ts";
-import { DefaultPolicyEngine, type PolicyEngine } from "../../policy-engine/src/index.ts";
+import { DefaultPolicyEngine, policyRules, type PolicyEngine } from "../../policy-engine/src/index.ts";
 import { InMemoryEventTransport, type EventTransport } from "../../transport/src/index.ts";
 import { MemWalAdapter, type MemoryAdapter } from "../../memwal-adapter/src/index.ts";
 import { InMemoryStorageAdapter, type StorageAdapter } from "../../storage/src/index.ts";
@@ -147,6 +153,10 @@ function header(input: {
 }
 
 export class SuiMeshClient {
+  readonly constants = SuiMeshConstants;
+  readonly actors = actors;
+  readonly manifest = actionManifests;
+  readonly policyRules = policyRules;
   readonly transport: EventTransport;
   readonly messaging: EventTransport;
   readonly memory: MemoryAdapter;
@@ -166,7 +176,7 @@ export class SuiMeshClient {
     this.simulator = config.simulator ?? new LocalPtbSimulator();
     this.policyEngine = config.policyEngine ?? new DefaultPolicyEngine();
     this.traceGuard = config.traceGuard ?? new LocalTraceGuard();
-    this.defaultActor = config.defaultActor ?? { role: "system", id: "suimesh-sdk" };
+    this.defaultActor = config.defaultActor ?? actors.system("suimesh-sdk");
   }
 
   light = {
@@ -179,11 +189,11 @@ export class SuiMeshClient {
       nowMs?: number;
     }): Promise<EventEnvelope> => {
       const envelope = encodeEvent({
-        encoding: "json-v1",
+        encoding: Encodings.JsonV1,
         header: header({
           sessionId: input.sessionId,
           traceId: input.traceId,
-          eventType: input.actor.role === "agent" ? "conversation.agent_message.v1" : "conversation.user_message.v1",
+          eventType: input.actor.role === ActorRoles.Agent ? EventTypes.AgentMessage : EventTypes.UserMessage,
           actor: input.actor,
           previousEventHash: input.previousEventHash,
           nowMs: input.nowMs
@@ -216,11 +226,11 @@ export class SuiMeshClient {
         manifest
       };
       const envelope = encodeEvent({
-        encoding: "bcs-v1",
+        encoding: Encodings.BcsV1,
         header: header({
           sessionId: input.sessionId,
           traceId: input.traceId,
-          eventType: "decision.sui_ptb_action.v1",
+          eventType: EventTypes.SuiPtbAction,
           actor: input.actor,
           previousEventHash: input.previousEventHash,
           idempotencyKey: manifest.idempotencyKey,
@@ -295,11 +305,11 @@ export class SuiMeshClient {
     evaluateAndRecord: async (input: RecordPolicyDecisionInput): Promise<{ decision: PolicyDecision; envelope: EventEnvelope }> => {
       const decision = this.policyEngine.evaluate(input);
       const envelope = encodeEvent({
-        encoding: "bcs-v1",
+        encoding: Encodings.BcsV1,
         header: header({
           sessionId: input.sessionId,
           traceId: input.traceId,
-          eventType: "decision.policy_decision.v1",
+          eventType: EventTypes.PolicyDecision,
           actor: input.decider,
           previousEventHash: input.previousEventHash,
           nowMs: input.nowMs
@@ -336,11 +346,11 @@ export class SuiMeshClient {
     anchorAndRecord: async (input: RecordTraceAnchorInput): Promise<{ anchor: ActionAnchor; envelope: EventEnvelope }> => {
       const anchor = await this.traceGuard.anchor(input);
       const envelope = encodeEvent({
-        encoding: "bcs-v1",
+        encoding: Encodings.BcsV1,
         header: header({
           sessionId: input.sessionId,
           traceId: input.traceId,
-          eventType: "trace.action_anchor.v1",
+          eventType: EventTypes.ActionAnchor,
           actor: input.actor,
           previousEventHash: input.previousEventHash,
           nowMs: input.nowMs
@@ -357,11 +367,11 @@ export class SuiMeshClient {
         claimant: input.claimant ?? input.actor.address
       });
       const envelope = encodeEvent({
-        encoding: "bcs-v1",
+        encoding: Encodings.BcsV1,
         header: header({
           sessionId: input.sessionId,
           traceId: input.traceId,
-          eventType: "trace.action_claim.v1",
+          eventType: EventTypes.ActionClaim,
           actor: input.actor,
           previousEventHash: input.previousEventHash,
           nowMs: input.nowMs
@@ -375,11 +385,11 @@ export class SuiMeshClient {
     executeApprovedAndRecord: async (input: ExecuteApprovedAndRecordInput): Promise<{ receipt: ExecutionReceipt; envelope: EventEnvelope }> => {
       const receipt = await this.actions.executeApproved(input);
       const envelope = encodeEvent({
-        encoding: "bcs-v1",
+        encoding: Encodings.BcsV1,
         header: header({
           sessionId: input.sessionId,
           traceId: input.traceId,
-          eventType: "outcome.execution_receipt.v1",
+          eventType: EventTypes.ExecutionReceipt,
           actor: input.executor,
           previousEventHash: input.previousEventHash,
           nowMs: input.nowMs
@@ -421,11 +431,11 @@ export class SuiMeshClient {
 
   private async recordMemoryReceipt(input: RecordMemoryInput, receipt: MemoryReceipt): Promise<EventEnvelope> {
     const envelope = encodeEvent({
-      encoding: "json-v1",
+      encoding: Encodings.JsonV1,
       header: header({
         sessionId: input.sessionId,
         traceId: input.traceId,
-        eventType: "context.memory_receipt.v1",
+        eventType: EventTypes.MemoryReceipt,
         actor: input.actor,
         previousEventHash: input.previousEventHash,
         nowMs: input.nowMs
@@ -499,12 +509,12 @@ function verifyTraceState(events: DecodedEvent[]): string[] {
     const state = traceStateFor(states, traceId);
     const payload = objectPayload(event);
 
-    if (event.header.eventType === "decision.sui_ptb_action.v1") {
+    if (event.header.eventType === EventTypes.SuiPtbAction) {
       state.proposalSeen = true;
       continue;
     }
 
-    if (event.header.eventType === "decision.policy_decision.v1") {
+    if (event.header.eventType === EventTypes.PolicyDecision) {
       const actionHash = stringField(payload, "actionHash");
       const decision = stringField(payload, "decision");
       if (!state.proposalSeen) {
@@ -516,7 +526,7 @@ function verifyTraceState(events: DecodedEvent[]): string[] {
       continue;
     }
 
-    if (event.header.eventType === "trace.action_anchor.v1") {
+    if (event.header.eventType === EventTypes.ActionAnchor) {
       const actionHash = stringField(payload, "actionHash");
       if (!actionHash) {
         errors.push(`trace ${traceId} action anchor is missing actionHash`);
@@ -529,7 +539,7 @@ function verifyTraceState(events: DecodedEvent[]): string[] {
       continue;
     }
 
-    if (event.header.eventType === "trace.action_claim.v1") {
+    if (event.header.eventType === EventTypes.ActionClaim) {
       const actionHash = stringField(payload, "actionHash");
       const claimed = booleanField(payload, "claimed");
       const duplicate = booleanField(payload, "duplicate");
@@ -546,7 +556,7 @@ function verifyTraceState(events: DecodedEvent[]): string[] {
       continue;
     }
 
-    if (event.header.eventType === "outcome.execution_receipt.v1") {
+    if (event.header.eventType === EventTypes.ExecutionReceipt) {
       const actionHash = stringField(payload, "actionHash");
       if (!actionHash) {
         errors.push(`trace ${traceId} execution receipt is missing actionHash`);
@@ -559,7 +569,7 @@ function verifyTraceState(events: DecodedEvent[]): string[] {
       continue;
     }
 
-    if (event.header.eventType === "outcome.audit_event.v1") {
+    if (event.header.eventType === EventTypes.AuditEvent) {
       const eventHash = stringField(payload, "eventHash");
       const previousEventHash = stringField(payload, "previousEventHash");
       if (!eventHash && !previousEventHash && state.executedActions.size === 0) {

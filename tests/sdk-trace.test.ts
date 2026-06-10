@@ -5,8 +5,8 @@ import {
   encodeEvent,
   encodeInspectablePtb,
   hashJson,
+  policyRules,
   SuiMoveTraceGuardDriver,
-  type ActionManifest,
   type SuiMoveTraceGuardClient,
   type SuiMoveTraceGuardTransactionResult
 } from "../src/index.ts";
@@ -16,10 +16,10 @@ const ALICE_ADDRESS = "0x0000000000000000000000000000000000000000000000000000000
 describe("SDK and trace guard", () => {
   test("runs a minimal heavy path and blocks duplicate claims", async () => {
     const client = createSuiMeshClient();
-    const user = { role: "user" as const, id: "alice", address: "0xalice" };
-    const agent = { role: "agent" as const, id: "agent", address: "0xagent" };
-    const policyActor = { role: "policy" as const, id: "policy" };
-    const executor = { role: "executor" as const, id: "executor" };
+    const user = client.actors.user("alice", { address: "0xalice" });
+    const agent = client.actors.agent("agent", { address: "0xagent" });
+    const policyActor = client.actors.policy("policy");
+    const executor = client.actors.executor("executor");
 
     const light = await client.light.sendMessage({
       sessionId: "ses_sdk",
@@ -31,19 +31,16 @@ describe("SDK and trace guard", () => {
     const ptbBytes = encodeInspectablePtb([
       { kind: "transfer", recipient: "0xbob", amount: "10", coinType: "SUI", objectIds: ["0xcoin"] }
     ]);
-    const manifest: Omit<ActionManifest, "actionType" | "ptbHash"> = {
+    const manifest = client.manifest.transfer({
       actionId: "act_sdk",
       traceId: "tr_sdk",
-      semanticType: "transfer",
-      template: "transfer",
+      amount: "10",
+      coinType: "SUI",
+      objectIds: ["0xcoin"],
       summary: "Send 10 SUI to Bob",
-      riskLevel: "medium",
-      valueAtRisk: { amount: "10", coinType: "SUI" },
-      objectsTouched: ["0xcoin"],
-      policyRequirements: ["max_value_at_risk", "recipient_allowlist"],
       expiresAtMs: 4_000_000_000_000,
       idempotencyKey: "idem_sdk"
-    };
+    });
 
     const proposed = await client.actions.proposePtb({
       sessionId: "ses_sdk",
@@ -58,9 +55,9 @@ describe("SDK and trace guard", () => {
     const decision = client.policy.evaluate({
       policy: createDefaultPolicy({
         rules: [
-          { name: "max_value_at_risk", params: { maxAmount: "20", coinType: "SUI" } },
-          { name: "recipient_allowlist", params: { recipients: ["0xbob"] } },
-          { name: "expiration_check", params: {} }
+          policyRules.maxValueAtRisk({ maxAmount: "20", coinType: "SUI" }),
+          policyRules.recipientAllowlist(["0xbob"]),
+          policyRules.expirationCheck()
         ]
       }),
       facts: simulated.facts,
@@ -330,10 +327,10 @@ describe("SDK and trace guard", () => {
 
   test("records a recoverable heavy trace chain through transport", async () => {
     const client = createSuiMeshClient();
-    const user = { role: "user" as const, id: "alice", address: "0xalice" };
-    const agent = { role: "agent" as const, id: "agent", address: "0xagent" };
-    const policyActor = { role: "policy" as const, id: "policy" };
-    const executor = { role: "executor" as const, id: "executor" };
+    const user = client.actors.user("alice", { address: "0xalice" });
+    const agent = client.actors.agent("agent", { address: "0xagent" });
+    const policyActor = client.actors.policy("policy");
+    const executor = client.actors.executor("executor");
     const sessionId = "ses_recorded";
     const traceId = "tr_recorded";
 
@@ -346,19 +343,16 @@ describe("SDK and trace guard", () => {
     const ptbBytes = encodeInspectablePtb([
       { kind: "transfer", recipient: "0xbob", amount: "10", coinType: "SUI", objectIds: ["0xcoin"] }
     ]);
-    const manifest: Omit<ActionManifest, "actionType" | "ptbHash"> = {
+    const manifest = client.manifest.transfer({
       actionId: "act_recorded",
       traceId,
-      semanticType: "transfer",
-      template: "transfer",
+      amount: "10",
+      coinType: "SUI",
+      objectIds: ["0xcoin"],
       summary: "Send 10 SUI to Bob",
-      riskLevel: "medium",
-      valueAtRisk: { amount: "10", coinType: "SUI" },
-      objectsTouched: ["0xcoin"],
-      policyRequirements: ["max_value_at_risk", "recipient_allowlist"],
       expiresAtMs: 4_000_000_000_000,
       idempotencyKey: "idem_recorded"
-    };
+    });
     const proposed = await client.actions.proposePtb({
       sessionId,
       traceId,
@@ -374,9 +368,9 @@ describe("SDK and trace guard", () => {
       traceId,
       policy: createDefaultPolicy({
         rules: [
-          { name: "max_value_at_risk", params: { maxAmount: "20", coinType: "SUI" } },
-          { name: "recipient_allowlist", params: { recipients: ["0xbob"] } },
-          { name: "expiration_check", params: {} }
+          policyRules.maxValueAtRisk({ maxAmount: "20", coinType: "SUI" }),
+          policyRules.recipientAllowlist(["0xbob"]),
+          policyRules.expirationCheck()
         ]
       }),
       facts: simulated.facts,
