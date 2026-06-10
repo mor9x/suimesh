@@ -5,9 +5,14 @@ import {
   encodeEvent,
   encodeInspectablePtb,
   hashJson,
+  hexToBytes,
   policyRules,
   SuiMoveTraceGuardDriver,
+  utf8ToBytes,
   type SuiMoveTraceGuardClient,
+  type SuiMoveTraceGuardEvent,
+  type SuiMoveTraceGuardEventPage,
+  type SuiMoveTraceGuardEventQueryInput,
   type SuiMoveTraceGuardTransactionResult
 } from "../src/index.ts";
 
@@ -157,6 +162,117 @@ describe("SDK and trace guard", () => {
       },
       nowMs: 5
     })).rejects.toThrow("unauthorized claimant");
+  });
+
+  test("rejects mismatched decision and claim action hashes", async () => {
+    const client = createSuiMeshClient();
+    const actionA = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const actionB = "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+    const decisionA = {
+      actionHash: actionA,
+      policyHash: "0xpolicy",
+      policyVersion: "1",
+      evaluatedFactsHash: "0xfacts",
+      decision: "approved" as const,
+      reason: "ok",
+      decider: client.actors.policy("policy"),
+      createdAtMs: 1
+    };
+
+    await client.traceGuard.anchor({
+      traceId: "tr_mismatch",
+      actionHash: actionB,
+      authorizedExecutor: "0xexecutor",
+      expiresAtMs: 100,
+      nowMs: 2
+    });
+
+    await expect(client.traceGuard.claim({
+      actionHash: actionB,
+      decision: decisionA,
+      claimant: "0xexecutor",
+      nowMs: 3
+    })).rejects.toThrow("different action");
+
+    const decisionB = { ...decisionA, actionHash: actionB };
+    const claimB = await client.traceGuard.claim({
+      actionHash: actionB,
+      decision: decisionB,
+      claimant: "0xexecutor",
+      nowMs: 4
+    });
+
+    await expect(client.actions.executeApproved({
+      actionHash: actionB,
+      claim: claimB,
+      decision: decisionA,
+      executor: client.actors.executor("executor", { address: "0xexecutor" }),
+      execute: async () => ({ txDigest: "0xtx" }),
+      nowMs: 5
+    })).rejects.toThrow("PolicyDecision for a different action");
+
+    await expect(client.actions.executeApproved({
+      actionHash: actionB,
+      claim: { ...claimB, actionHash: actionA },
+      decision: decisionB,
+      executor: client.actors.executor("executor", { address: "0xexecutor" }),
+      execute: async () => ({ txDigest: "0xtx" }),
+      nowMs: 6
+    })).rejects.toThrow("ActionClaim for a different action");
+  });
+
+  test("local trace guard rejects duplicate anchor and completed action re-anchor", async () => {
+    const client = createSuiMeshClient();
+    const actionHash = "0xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd";
+    const decision = {
+      actionHash,
+      policyHash: "0xpolicy",
+      policyVersion: "1",
+      evaluatedFactsHash: "0xfacts",
+      decision: "approved" as const,
+      reason: "ok",
+      decider: client.actors.policy("policy"),
+      createdAtMs: 1
+    };
+
+    await client.traceGuard.anchor({
+      traceId: "tr_duplicate_anchor",
+      actionHash,
+      authorizedExecutor: "0xexecutor",
+      expiresAtMs: 100,
+      nowMs: 2
+    });
+    await expect(client.traceGuard.anchor({
+      traceId: "tr_duplicate_anchor",
+      actionHash,
+      authorizedExecutor: "0xexecutor",
+      expiresAtMs: 100,
+      nowMs: 3
+    })).rejects.toThrow("already anchored");
+
+    const claim = await client.traceGuard.claim({
+      actionHash,
+      decision,
+      claimant: "0xexecutor",
+      claimLeaseMs: 20,
+      nowMs: 4
+    });
+    await client.actions.executeApproved({
+      actionHash,
+      claim,
+      decision,
+      executor: client.actors.executor("executor", { address: "0xexecutor" }),
+      execute: async () => ({ txDigest: "0xtx" }),
+      nowMs: 5
+    });
+
+    await expect(client.traceGuard.anchor({
+      traceId: "tr_duplicate_anchor",
+      actionHash,
+      authorizedExecutor: "0xexecutor",
+      expiresAtMs: 100,
+      nowMs: 6
+    })).rejects.toThrow("already anchored");
   });
 
   test("local trace guard allows reclaim after claim lease expires", async () => {
@@ -325,6 +441,87 @@ describe("SDK and trace guard", () => {
     expect(duplicate.duplicate).toBe(true);
   });
 
+  test("Sui Move trace guard restores anchor state from trace events without local cache", async () => {
+    const packageId = "0x0000000000000000000000000000000000000000000000000000000000000002";
+    const registryId = "0x07707cb0206a042788107e4738f79825b1f8f36a092479dbda436cde06cf873c";
+    const actionHash = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
+    const proposalHash = "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+    const decisionHash = "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc";
+    const receiptHash = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+    const eventClient = new EventQuerySuiClient([
+      {
+        type: `${packageId}::trace::ActionAnchored`,
+        timestampMs: "2",
+        parsedJson: {
+          trace_id: bytes("tr_event_restore"),
+          action_hash: bytes(actionHash),
+          proposal_hash: bytes(proposalHash),
+          decision_hash: bytes(decisionHash),
+          owner: ALICE_ADDRESS,
+          authorized_executor: ALICE_ADDRESS,
+          approved: true,
+          expires_at_ms: "1000",
+          timestamp_ms: "2"
+        }
+      },
+      {
+        type: `${packageId}::trace::ActionClaimed`,
+        timestampMs: "3",
+        parsedJson: {
+          action_hash: bytes(actionHash),
+          claimant: ALICE_ADDRESS,
+          claim_expires_at_ms: "900",
+          timestamp_ms: "3"
+        }
+      },
+      {
+        type: `${packageId}::trace::ActionCompleted`,
+        timestampMs: "4",
+        parsedJson: {
+          action_hash: bytes(actionHash),
+          receipt_hash: bytes(receiptHash),
+          claimant: ALICE_ADDRESS,
+          status: 3,
+          timestamp_ms: "4"
+        }
+      }
+    ]);
+    const driver = new SuiMoveTraceGuardDriver({
+      client: eventClient,
+      signer: signer as never,
+      packageId,
+      registryId
+    });
+
+    const restored = await driver.getAnchor(actionHash);
+    expect(restored?.traceId).toBe("tr_event_restore");
+    expect(restored?.status).toBe("executed");
+    expect(restored?.receiptHash).toBe(receiptHash);
+    expect(restored?.claimant).toBe(ALICE_ADDRESS);
+
+    const freshDriver = new SuiMoveTraceGuardDriver({
+      client: eventClient,
+      signer: signer as never,
+      packageId,
+      registryId
+    });
+    const completed = await freshDriver.complete({
+      actionHash,
+      receipt: {
+        actionHash,
+        claimId: "claim_event_restore",
+        executor: { role: "executor", id: "executor", address: ALICE_ADDRESS },
+        status: "success",
+        txDigest: "0xtx",
+        createdAtMs: 5
+      },
+      nowMs: 5
+    });
+
+    expect(completed.status).toBe("executed");
+    expect(eventClient.calls).toEqual(["complete_action"]);
+  });
+
   test("records a recoverable heavy trace chain through transport", async () => {
     const client = createSuiMeshClient();
     const user = client.actors.user("alice", { address: "0xalice" });
@@ -475,6 +672,10 @@ const signer = {
   signTransactionBlock: async () => ({ bytes: "", signature: "" })
 };
 
+function bytes(value: string): number[] {
+  return Array.from(value.startsWith("0x") ? hexToBytes(value) : utf8ToBytes(value));
+}
+
 class FakeSuiClient implements SuiMoveTraceGuardClient {
   calls: string[] = [];
   private claims = 0;
@@ -506,6 +707,35 @@ class FakeSuiClient implements SuiMoveTraceGuardClient {
           status: "success"
         }
       }
+    };
+  }
+}
+
+class EventQuerySuiClient implements SuiMoveTraceGuardClient {
+  calls: string[] = [];
+
+  constructor(private readonly events: SuiMoveTraceGuardEvent[]) {}
+
+  async signAndExecuteTransaction(
+    input: Parameters<SuiMoveTraceGuardClient["signAndExecuteTransaction"]>[0]
+  ): Promise<SuiMoveTraceGuardTransactionResult> {
+    const data = input.transaction.getData() as { commands?: { MoveCall?: { function?: string } }[] };
+    const call = data.commands?.[0]?.MoveCall?.function ?? "unknown";
+    this.calls.push(call);
+    return {
+      digest: "0xok",
+      effects: {
+        status: {
+          status: "success"
+        }
+      }
+    };
+  }
+
+  async queryEvents(input: SuiMoveTraceGuardEventQueryInput): Promise<SuiMoveTraceGuardEventPage> {
+    return {
+      data: this.events.filter((event) => event.type === input.query.MoveEventType),
+      hasNextPage: false
     };
   }
 }

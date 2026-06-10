@@ -250,12 +250,15 @@ const receipt = await client.trace.executeApprovedAndRecord({
 No approved PolicyDecision, no execution.
 No successful ActionClaim, no execution.
 No ExecutionReceipt, no completed trace.
+PolicyDecision、ActionClaim 和 ExecutionReceipt 必须指向同一个 action hash。
 ```
 
 链上 trace guard 会在 anchor 时记录授权 executor 和 action 过期时间。Claim 和 completion
-交易必须由授权 executor / claimant 发起。
+交易必须由授权 executor / claimant 发起。`SuiMoveTraceGuardDriver` 可以从已发出的 Move
+events 恢复 anchor、claim 和 completion 状态。
 
-真实 Sui 协调使用 `SuiOnchainTraceGuard` 和 `SuiMoveTraceGuardDriver`。本地 trace guard 只适合测试和确定性示例。
+真实 Sui 协调使用 `SuiOnchainTraceGuard` 和 `SuiMoveTraceGuardDriver`。本地 trace guard
+只适合测试和确定性示例；它会拒绝重复 anchor，以对齐链上 action claim 语义。
 
 ## 恢复和验证
 

@@ -265,11 +265,20 @@ export class SuiMeshClient {
       if (input.decision.decision !== "approved") {
         throw new Error("Cannot execute without approved PolicyDecision");
       }
+      if (input.decision.actionHash !== input.actionHash) {
+        throw new Error("Cannot execute with PolicyDecision for a different action");
+      }
+      if (input.claim.actionHash !== input.actionHash) {
+        throw new Error("Cannot execute with ActionClaim for a different action");
+      }
       if (!input.claim.claimed || input.claim.duplicate) {
         throw new Error("Cannot execute without successful non-duplicate ActionClaim");
       }
       const nowMs = input.nowMs ?? Date.now();
       const anchor = await this.traceGuard.getAnchor(input.actionHash);
+      if (!anchor) {
+        throw new Error("Cannot execute without ActionAnchor");
+      }
       if (anchor?.expiresAtMs !== undefined && anchor.expiresAtMs <= nowMs) {
         throw new Error("Cannot execute expired action");
       }

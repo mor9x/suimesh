@@ -465,6 +465,7 @@ No successful inspect/simulate, no policy approval.
 No approved PolicyDecision, no execution.
 No successful ActionClaim, no execution.
 No ExecutionReceipt, no completed trace.
+PolicyDecision, ActionClaim, and ExecutionReceipt must reference the same action hash.
 ```
 
 On-chain trace guards must treat claim as an authorization lock, not just a marker:
@@ -475,6 +476,7 @@ claim requires sender == authorized_executor
 claim records claimant and claim lease expiry
 complete/fail requires sender == claimant
 expired claim lease can be reclaimed
+SDK drivers restore on-chain trace guard state from emitted Move events
 ```
 
 Duplicate handling:

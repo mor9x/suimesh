@@ -256,13 +256,16 @@ Execution rules:
 No approved PolicyDecision, no execution.
 No successful ActionClaim, no execution.
 No ExecutionReceipt, no completed trace.
+PolicyDecision, ActionClaim, and ExecutionReceipt must reference the same action hash.
 ```
 
 The on-chain trace guard records the authorized executor and action expiry at anchor time. Claim and
-completion transactions must be sent by the authorized executor/claimant.
+completion transactions must be sent by the authorized executor/claimant. `SuiMoveTraceGuardDriver`
+can restore anchor, claim, and completion state from emitted Move events.
 
 For live Sui coordination, use `SuiOnchainTraceGuard` with a `SuiMoveTraceGuardDriver`. The local
-trace guard is for tests and deterministic examples.
+trace guard is for tests and deterministic examples; it rejects duplicate anchors to match the
+on-chain action-claim semantics.
 
 ## Restore And Verify
 

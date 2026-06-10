@@ -1,5 +1,5 @@
 import type { EventEnvelope, ExecutionReceipt, JsonValue, PolicyDecision, TraceState } from "../../protocol/src/index.ts";
-import { hashJson, hexToBytes, utf8ToBytes } from "../../codec/src/index.ts";
+import { bytesToHex, bytesToUtf8, hashJson, hexToBytes, utf8ToBytes } from "../../codec/src/index.ts";
 import { Transaction } from "@mysten/sui/transactions";
 import type { Signer } from "@mysten/sui/cryptography";
 
@@ -66,7 +66,10 @@ export class LocalTraceGuard implements TraceGuard {
   }): Promise<ActionAnchor> {
     const nowMs = input.nowMs ?? Date.now();
     const existing = this.anchors.get(input.actionHash);
-    const expiresAtMs = input.expiresAtMs ?? existing?.expiresAtMs ?? nowMs + DEFAULT_ACTION_TTL_MS;
+    if (existing) {
+      throw new Error("Action already anchored");
+    }
+    const expiresAtMs = input.expiresAtMs ?? nowMs + DEFAULT_ACTION_TTL_MS;
     if (expiresAtMs <= nowMs) {
       throw new Error("Cannot anchor an already expired action");
     }
@@ -74,19 +77,16 @@ export class LocalTraceGuard implements TraceGuard {
       throw new Error("Cannot anchor action with zero authorized executor");
     }
     const next: ActionAnchor = {
-      anchorId: existing?.anchorId ?? hashJson({ traceId: input.traceId, actionHash: input.actionHash }),
+      anchorId: hashJson({ traceId: input.traceId, actionHash: input.actionHash }),
       traceId: input.traceId,
       actionHash: input.actionHash,
-      proposalHash: input.proposalHash ?? existing?.proposalHash,
-      decisionHash: input.decisionHash ?? existing?.decisionHash,
-      receiptHash: existing?.receiptHash,
-      owner: input.owner ?? existing?.owner,
-      authorizedExecutor: input.authorizedExecutor ?? existing?.authorizedExecutor,
-      claimant: existing?.claimant,
+      proposalHash: input.proposalHash,
+      decisionHash: input.decisionHash,
+      owner: input.owner,
+      authorizedExecutor: input.authorizedExecutor,
       status: "anchored",
       expiresAtMs,
-      claimExpiresAtMs: existing?.claimExpiresAtMs,
-      createdAtMs: existing?.createdAtMs ?? nowMs,
+      createdAtMs: nowMs,
       updatedAtMs: nowMs
     };
     this.anchors.set(input.actionHash, next);
@@ -96,6 +96,9 @@ export class LocalTraceGuard implements TraceGuard {
   async claim(input: { actionHash: string; decision: PolicyDecision; claimant?: string; claimLeaseMs?: number; nowMs?: number }): Promise<ActionClaim> {
     if (input.decision.decision !== "approved") {
       throw new Error("Cannot claim an action without approved PolicyDecision");
+    }
+    if (input.decision.actionHash !== input.actionHash) {
+      throw new Error("Cannot claim with PolicyDecision for a different action");
     }
     const nowMs = input.nowMs ?? Date.now();
     const anchor = this.anchors.get(input.actionHash);
@@ -137,6 +140,9 @@ export class LocalTraceGuard implements TraceGuard {
 
   async complete(input: { actionHash: string; receipt: ExecutionReceipt; nowMs?: number }): Promise<ActionAnchor> {
     const nowMs = input.nowMs ?? Date.now();
+    if (input.receipt.actionHash !== input.actionHash) {
+      throw new Error("Cannot complete with receipt for a different action");
+    }
     const anchor = this.anchors.get(input.actionHash);
     if (!anchor) {
       throw new Error("Cannot complete unanchored action");
@@ -255,6 +261,26 @@ export interface SuiMoveTraceGuardTransactionResult {
   };
 }
 
+export interface SuiMoveTraceGuardEventQueryInput {
+  query: { MoveEventType: string };
+  cursor?: unknown;
+  limit?: number;
+  order?: "ascending" | "descending";
+}
+
+export interface SuiMoveTraceGuardEvent {
+  id?: unknown;
+  type: string;
+  parsedJson?: unknown;
+  timestampMs?: string;
+}
+
+export interface SuiMoveTraceGuardEventPage {
+  data: SuiMoveTraceGuardEvent[];
+  nextCursor?: unknown;
+  hasNextPage: boolean;
+}
+
 export interface SuiMoveTraceGuardClient {
   signAndExecuteTransaction(input: {
     transaction: Transaction;
@@ -265,6 +291,7 @@ export interface SuiMoveTraceGuardClient {
       showEvents?: boolean;
     };
   }): Promise<SuiMoveTraceGuardTransactionResult>;
+  queryEvents?(input: SuiMoveTraceGuardEventQueryInput): Promise<SuiMoveTraceGuardEventPage>;
 }
 
 export interface SuiMoveTraceGuardDriverConfig {
@@ -276,10 +303,16 @@ export interface SuiMoveTraceGuardDriverConfig {
   defaultAuthorizedExecutor?: string;
   defaultActionTtlMs?: number;
   defaultClaimLeaseMs?: number;
+  eventQueryPageSize?: number;
+  eventQueryMaxPages?: number;
 }
 
 const SUI_CLOCK_OBJECT_ID = "0x6";
 const E_ALREADY_CLAIMED = 2;
+const DEFAULT_EVENT_QUERY_PAGE_SIZE = 50;
+const DEFAULT_EVENT_QUERY_MAX_PAGES = 20;
+const MOVE_STATUS_EXECUTED = 3;
+const MOVE_STATUS_FAILED = 4;
 
 export class SuiMoveTraceGuardDriver implements SuiTraceGuardDriver {
   private readonly client: SuiMoveTraceGuardClient;
@@ -290,6 +323,8 @@ export class SuiMoveTraceGuardDriver implements SuiTraceGuardDriver {
   private readonly defaultAuthorizedExecutor?: string;
   private readonly defaultActionTtlMs: number;
   private readonly defaultClaimLeaseMs: number;
+  private readonly eventQueryPageSize: number;
+  private readonly eventQueryMaxPages: number;
   private readonly anchors = new Map<string, ActionAnchor>();
 
   constructor(config: SuiMoveTraceGuardDriverConfig) {
@@ -301,6 +336,8 @@ export class SuiMoveTraceGuardDriver implements SuiTraceGuardDriver {
     this.defaultAuthorizedExecutor = config.defaultAuthorizedExecutor;
     this.defaultActionTtlMs = config.defaultActionTtlMs ?? DEFAULT_ACTION_TTL_MS;
     this.defaultClaimLeaseMs = config.defaultClaimLeaseMs ?? DEFAULT_CLAIM_LEASE_MS;
+    this.eventQueryPageSize = config.eventQueryPageSize ?? DEFAULT_EVENT_QUERY_PAGE_SIZE;
+    this.eventQueryMaxPages = config.eventQueryMaxPages ?? DEFAULT_EVENT_QUERY_MAX_PAGES;
   }
 
   async anchor(input: Parameters<TraceGuard["anchor"]>[0]): Promise<ActionAnchor> {
@@ -343,6 +380,9 @@ export class SuiMoveTraceGuardDriver implements SuiTraceGuardDriver {
     if (input.decision.decision !== "approved") {
       throw new Error("Cannot claim an action without approved PolicyDecision");
     }
+    if (input.decision.actionHash !== input.actionHash) {
+      throw new Error("Cannot claim with PolicyDecision for a different action");
+    }
 
     const nowMs = input.nowMs ?? Date.now();
     const claimId = hashJson({ actionHash: input.actionHash, decisionHash: input.decision.evaluatedFactsHash });
@@ -361,13 +401,14 @@ export class SuiMoveTraceGuardDriver implements SuiTraceGuardDriver {
       if (!isMoveAbort(message, E_ALREADY_CLAIMED)) {
         throw error;
       }
+      const anchor = await this.getAnchor(input.actionHash);
       return {
         claimId,
         actionHash: input.actionHash,
         claimant,
         claimed: false,
         duplicate: true,
-        claimExpiresAtMs: this.anchors.get(input.actionHash)?.claimExpiresAtMs,
+        claimExpiresAtMs: anchor?.claimExpiresAtMs,
         createdAtMs: nowMs
       };
     }
@@ -378,7 +419,8 @@ export class SuiMoveTraceGuardDriver implements SuiTraceGuardDriver {
     }
 
     if (!duplicate) {
-      const anchor = this.anchors.get(input.actionHash);
+      const restored = await this.restoreAnchor(input.actionHash, true);
+      const anchor = restored ?? this.anchors.get(input.actionHash);
       if (anchor) {
         this.anchors.set(input.actionHash, {
           ...anchor,
@@ -403,6 +445,9 @@ export class SuiMoveTraceGuardDriver implements SuiTraceGuardDriver {
 
   async complete(input: Parameters<TraceGuard["complete"]>[0]): Promise<ActionAnchor> {
     const nowMs = input.nowMs ?? Date.now();
+    if (input.receipt.actionHash !== input.actionHash) {
+      throw new Error("Cannot complete with receipt for a different action");
+    }
     const receiptHash = hashJson(input.receipt as unknown as JsonValue);
     const result = await this.execute("complete_action", (tx) => [
       tx.object(this.registryId),
@@ -411,6 +456,10 @@ export class SuiMoveTraceGuardDriver implements SuiTraceGuardDriver {
       tx.object(this.clockId)
     ]);
     assertTransactionSuccess(result, "complete_action");
+    const restored = await this.restoreAnchor(input.actionHash, true);
+    if (restored?.status === "executed" || restored?.status === "failed") {
+      return restored;
+    }
     return this.updateAnchor(input.actionHash, receiptHash, input.receipt.status === "success" ? "executed" : "failed", nowMs);
   }
 
@@ -428,11 +477,38 @@ export class SuiMoveTraceGuardDriver implements SuiTraceGuardDriver {
       tx.object(this.clockId)
     ]);
     assertTransactionSuccess(result, "fail_action");
+    const restored = await this.restoreAnchor(input.actionHash, true);
+    if (restored?.status === "failed") {
+      return restored;
+    }
     return this.updateAnchor(input.actionHash, receiptHash, "failed", nowMs);
   }
 
   async getAnchor(actionHash: string): Promise<ActionAnchor | undefined> {
-    return this.anchors.get(actionHash);
+    return this.anchors.get(actionHash) ?? this.restoreAnchor(actionHash);
+  }
+
+  async restoreAnchor(actionHash: string, force = false): Promise<ActionAnchor | undefined> {
+    if (!force) {
+      const cached = this.anchors.get(actionHash);
+      if (cached) {
+        return cached;
+      }
+    }
+    if (!this.client.queryEvents) {
+      return undefined;
+    }
+
+    const events = await this.queryTraceEvents();
+    const restored = restoreAnchorFromEvents({
+      actionHash,
+      registryId: this.registryId,
+      events
+    });
+    if (restored) {
+      this.anchors.set(actionHash, restored);
+    }
+    return restored;
   }
 
   private async execute(
@@ -469,6 +545,45 @@ export class SuiMoveTraceGuardDriver implements SuiTraceGuardDriver {
     this.anchors.set(actionHash, next);
     return next;
   }
+
+  private async queryTraceEvents(): Promise<SuiMoveTraceGuardEvent[]> {
+    if (!this.client.queryEvents) {
+      return [];
+    }
+
+    const allEvents: SuiMoveTraceGuardEvent[] = [];
+    for (const eventType of this.traceEventTypes()) {
+      let cursor: unknown;
+      let pages = 0;
+      while (pages < this.eventQueryMaxPages) {
+        const page = await this.client.queryEvents({
+          query: { MoveEventType: eventType },
+          cursor,
+          limit: this.eventQueryPageSize,
+          order: "ascending"
+        });
+        allEvents.push(...page.data);
+        cursor = page.nextCursor;
+        pages += 1;
+        if (!page.hasNextPage) {
+          break;
+        }
+      }
+    }
+
+    return allEvents.sort((left, right) => {
+      const byTime = eventTimestampMs(left) - eventTimestampMs(right);
+      return byTime !== 0 ? byTime : traceEventRank(left) - traceEventRank(right);
+    });
+  }
+
+  private traceEventTypes(): string[] {
+    return [
+      `${this.packageId}::trace::ActionAnchored`,
+      `${this.packageId}::trace::ActionClaimed`,
+      `${this.packageId}::trace::ActionCompleted`
+    ];
+  }
 }
 
 function transactionError(result: SuiMoveTraceGuardTransactionResult): string | undefined {
@@ -480,6 +595,152 @@ function transactionError(result: SuiMoveTraceGuardTransactionResult): string | 
     return status === "failure" ? "transaction failed" : undefined;
   }
   return status.status === "failure" ? status.error ?? "transaction failed" : undefined;
+}
+
+function restoreAnchorFromEvents(input: {
+  actionHash: string;
+  registryId: string;
+  events: SuiMoveTraceGuardEvent[];
+}): ActionAnchor | undefined {
+  const expectedActionHash = hashBytesForMove(input.actionHash);
+  let anchor: ActionAnchor | undefined;
+
+  for (const event of input.events) {
+    const parsed = asRecord(event.parsedJson);
+    if (!parsed || !moveBytesEqual(parsed.action_hash, expectedActionHash)) {
+      continue;
+    }
+
+    const timestampMs = numberField(parsed.timestamp_ms) ?? eventTimestampMs(event);
+
+    if (event.type.endsWith("::ActionAnchored")) {
+      anchor = {
+        anchorId: hashJson({ registryId: input.registryId, actionHash: input.actionHash }),
+        traceId: textField(parsed.trace_id) ?? "",
+        actionHash: input.actionHash,
+        proposalHash: optionalHashField(parsed.proposal_hash),
+        decisionHash: optionalHashField(parsed.decision_hash),
+        owner: stringField(parsed.owner),
+        authorizedExecutor: stringField(parsed.authorized_executor),
+        status: "anchored",
+        expiresAtMs: numberField(parsed.expires_at_ms),
+        claimExpiresAtMs: 0,
+        createdAtMs: timestampMs,
+        updatedAtMs: timestampMs
+      };
+      continue;
+    }
+
+    if (event.type.endsWith("::ActionClaimed") && anchor) {
+      anchor = {
+        ...anchor,
+        claimant: stringField(parsed.claimant),
+        status: "claimed",
+        claimExpiresAtMs: numberField(parsed.claim_expires_at_ms),
+        updatedAtMs: timestampMs
+      };
+      continue;
+    }
+
+    if (event.type.endsWith("::ActionCompleted") && anchor) {
+      anchor = {
+        ...anchor,
+        receiptHash: optionalHashField(parsed.receipt_hash),
+        claimant: stringField(parsed.claimant) ?? anchor.claimant,
+        status: completedTraceState(parsed.status),
+        updatedAtMs: timestampMs
+      };
+    }
+  }
+
+  return anchor;
+}
+
+function eventTimestampMs(event: SuiMoveTraceGuardEvent): number {
+  return numberField(event.timestampMs) ?? 0;
+}
+
+function traceEventRank(event: SuiMoveTraceGuardEvent): number {
+  if (event.type.endsWith("::ActionAnchored")) return 1;
+  if (event.type.endsWith("::ActionClaimed")) return 2;
+  if (event.type.endsWith("::ActionCompleted")) return 3;
+  return 4;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : undefined;
+}
+
+function stringField(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
+}
+
+function numberField(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string" && value.trim().length > 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
+function bytesField(value: unknown): Uint8Array | undefined {
+  if (value instanceof Uint8Array) {
+    return value;
+  }
+  if (Array.isArray(value) && value.every((entry) => Number.isInteger(entry) && entry >= 0 && entry <= 255)) {
+    return Uint8Array.from(value as number[]);
+  }
+  if (typeof value === "string" && value.startsWith("0x")) {
+    try {
+      return hexToBytes(value);
+    } catch {
+      return undefined;
+    }
+  }
+  return undefined;
+}
+
+function moveBytesEqual(value: unknown, expected: Uint8Array): boolean {
+  const actual = bytesField(value);
+  if (!actual || actual.length !== expected.length) {
+    return false;
+  }
+  return actual.every((byte, index) => byte === expected[index]);
+}
+
+function optionalHashField(value: unknown): string | undefined {
+  const bytes = bytesField(value);
+  if (!bytes || bytes.length === 0) {
+    return undefined;
+  }
+  return bytesToHex(bytes);
+}
+
+function textField(value: unknown): string | undefined {
+  if (typeof value === "string") {
+    return value;
+  }
+  const bytes = bytesField(value);
+  if (!bytes) {
+    return undefined;
+  }
+  return bytesToUtf8(bytes);
+}
+
+function completedTraceState(value: unknown): TraceState {
+  if (value === "failed") {
+    return "failed";
+  }
+  const status = numberField(value);
+  if (status === MOVE_STATUS_FAILED) {
+    return "failed";
+  }
+  return status === MOVE_STATUS_EXECUTED ? "executed" : "executed";
 }
 
 function assertTransactionSuccess(result: SuiMoveTraceGuardTransactionResult, functionName: string): void {

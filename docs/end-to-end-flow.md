@@ -266,13 +266,15 @@ Rules:
 ```text
 No approved PolicyDecision, no execution.
 No successful ActionClaim, no execution.
+PolicyDecision, ActionClaim, and ExecutionReceipt must reference the same action hash.
 Duplicate event handling is not enough for money.
 Duplicate execution must be blocked by ActionClaim.
 Only the authorized executor can claim.
 Only the claimant can complete or fail the action.
 ```
 
-The trace guard can be local for tests or on-chain for verifiable coordination.
+The trace guard can be local for tests or on-chain for verifiable coordination. The Sui Move driver
+restores anchor, claim, and completion state from emitted Move events.
 
 ## 7. ExecutionReceipt
 

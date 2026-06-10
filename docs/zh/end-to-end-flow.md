@@ -264,13 +264,15 @@ trace.action_claim.v1
 ```text
 No approved PolicyDecision, no execution.
 No successful ActionClaim, no execution.
+PolicyDecision、ActionClaim 和 ExecutionReceipt 必须指向同一个 action hash。
 Duplicate event handling is not enough for money.
 Duplicate execution must be blocked by ActionClaim.
 Only the authorized executor can claim.
 Only the claimant can complete or fail the action.
 ```
 
-Trace guard 可以是测试用的 local guard，也可以是可验证协调用的 on-chain guard。
+Trace guard 可以是测试用的 local guard，也可以是可验证协调用的 on-chain guard。Sui Move
+driver 可以从已发出的 Move events 恢复 anchor、claim 和 completion 状态。
 
 ## 7. ExecutionReceipt
 
