@@ -73,6 +73,7 @@ const manifest = client.manifest.transfer({
   amount: "10",
   coinType: "SUI",
   recipient: "0xbob",
+  objectIds: ["0xcoin"],
 });
 
 const rule = policyRules.maxValueAtRisk({ maxAmount: "20", coinType: "SUI" });

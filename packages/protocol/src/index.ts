@@ -121,20 +121,14 @@ export const SuiMeshConstants = {
   memoryOperations: MemoryOperations
 } as const;
 
+type ConstantValue<T extends Record<string, string>> = T[keyof T];
+
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 
-export type Encoding = "json-v1" | "bcs-v1";
+export type Encoding = ConstantValue<typeof Encodings>;
 
-export type ActorRole =
-  | "user"
-  | "agent"
-  | "policy"
-  | "executor"
-  | "memory"
-  | "system"
-  | "dapp"
-  | "wallet";
+export type ActorRole = ConstantValue<typeof ActorRoles>;
 
 export interface Actor {
   role: ActorRole;
@@ -180,18 +174,7 @@ export function actorFromString(value: string): Actor {
   };
 }
 
-export type EventType =
-  | "conversation.user_message.v1"
-  | "conversation.agent_message.v1"
-  | "context.memory_receipt.v1"
-  | "decision.intent.v1"
-  | "decision.proposal.v1"
-  | "decision.sui_ptb_action.v1"
-  | "decision.policy_decision.v1"
-  | "trace.action_anchor.v1"
-  | "trace.action_claim.v1"
-  | "outcome.execution_receipt.v1"
-  | "outcome.audit_event.v1";
+export type EventType = ConstantValue<typeof EventTypes>;
 
 export interface EventHeader {
   eventId: string;
@@ -242,31 +225,14 @@ export interface BcsEnvelope {
 
 export type EventEnvelope = JsonEnvelope | BcsEnvelope;
 
-export type TraceState =
-  | "proposed"
-  | "inspected"
-  | "simulated"
-  | "policy_approved"
-  | "policy_rejected"
-  | "requires_confirmation"
-  | "anchored"
-  | "claimed"
-  | "executed"
-  | "failed"
-  | "expired"
-  | "revoked";
+export type TraceState = ConstantValue<typeof TraceStates>;
 
 export type SemanticType =
-  | "transfer"
-  | "move_call"
-  | "swap"
-  | "copy_trade"
-  | "prediction_market"
-  | "unknown"
+  | ConstantValue<typeof SemanticTypes>
   | (string & {});
 
-export type ActionTemplate = "transfer" | "move_call" | "custom";
-export type RiskLevel = "low" | "medium" | "high" | "critical";
+export type ActionTemplate = ConstantValue<typeof ActionTemplates>;
+export type RiskLevel = ConstantValue<typeof RiskLevels>;
 
 export interface PrimaryTarget {
   packageId: string;
@@ -320,7 +286,7 @@ export interface CreateTransferManifestInput extends Omit<CreatePtbManifestInput
   amount: string;
   coinType: string;
   recipient?: string;
-  objectIds?: string[];
+  objectIds: string[];
   policyRequirements?: string[];
 }
 
@@ -430,18 +396,10 @@ export interface SimulationResult {
   error?: string;
 }
 
-export type PolicyDecisionValue = "approved" | "rejected" | "requires_confirmation";
+export type PolicyDecisionValue = ConstantValue<typeof PolicyDecisionValues>;
 
 export interface PolicyRule {
-  name:
-    | "max_value_at_risk"
-    | "recipient_allowlist"
-    | "package_allowlist"
-    | "function_allowlist"
-    | "slippage_limit"
-    | "expiration_check"
-    | "risk_level_guard"
-    | "unknown_contract_guard";
+  name: ConstantValue<typeof PolicyRuleNames>;
   params: JsonValue;
 }
 
@@ -474,7 +432,7 @@ export interface ExecutionReceipt {
   actionHash: string;
   claimId: string;
   executor: Actor;
-  status: "success" | "failed";
+  status: ConstantValue<typeof ExecutionStatuses>;
   txDigest?: string;
   effectsHash?: string;
   error?: string;
@@ -491,8 +449,8 @@ export interface AuditEvent {
 }
 
 export interface MemoryReceipt {
-  provider: "memwal" | "external" | "none";
-  operation: "recall" | "remember";
+  provider: ConstantValue<typeof MemoryProviders>;
+  operation: ConstantValue<typeof MemoryOperations>;
   namespace?: string;
   memoryRef?: string;
   memoryHash?: string;
