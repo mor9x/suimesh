@@ -334,6 +334,30 @@ discovery, see [Sui Stack Messaging transport binding](sui-stack-messaging.md).
 
 Live scripts exercise real infrastructure, spend gas, and depend on external services.
 
+For remote messaging recovery tests, first start an official Sui Stack Messaging relayer and point
+SuiMesh at it:
+
+```bash
+git clone https://github.com/MystenLabs/sui-stack-messaging.git
+cd sui-stack-messaging/relayer
+cp .env.example .env
+# Fill GROUPS_PACKAGE_ID for your target network, then:
+docker compose up --build
+
+curl -fsS http://localhost:3000/health_check
+export SUIMESH_RELAYER_URL=http://localhost:3000
+```
+
+The testnet `GROUPS_PACKAGE_ID` currently used by the official relayer template is:
+
+```text
+0xba8a26d42bc8b5e5caf4dac2a0f7544128d5dd9b4614af88eec1311ade11de79
+```
+
+If a browser request returns `Missing X-Signature header`, that means a protected relayer endpoint
+was opened directly. Use `/health_check` for manual checks; message endpoints are called by the SDK
+with signed requests.
+
 ```bash
 bun run test:live:messaging
 SUIMESH_RELAYER_URL=http://localhost:3000 bun run test:live:messaging:remote

@@ -323,6 +323,28 @@ Group 创建、成员权限、Seal key-server、relayer 配置和轮询式 sessi
 
 Live scripts 会访问真实基础设施、花费 gas，并依赖外部服务。
 
+如果要跑 remote messaging recovery，先启动官方 Sui Stack Messaging relayer，然后把 SuiMesh 指向它：
+
+```bash
+git clone https://github.com/MystenLabs/sui-stack-messaging.git
+cd sui-stack-messaging/relayer
+cp .env.example .env
+# 填好目标网络的 GROUPS_PACKAGE_ID，然后启动：
+docker compose up --build
+
+curl -fsS http://localhost:3000/health_check
+export SUIMESH_RELAYER_URL=http://localhost:3000
+```
+
+官方 relayer template 当前使用的 testnet `GROUPS_PACKAGE_ID` 是：
+
+```text
+0xba8a26d42bc8b5e5caf4dac2a0f7544128d5dd9b4614af88eec1311ade11de79
+```
+
+如果浏览器打开后看到 `Missing X-Signature header`，说明你直接访问了受保护的 relayer endpoint。
+手动检查应该访问 `/health_check`；消息接口会由 SDK 发起，并自动带签名请求头。
+
 ```bash
 bun run test:live:messaging
 SUIMESH_RELAYER_URL=http://localhost:3000 bun run test:live:messaging:remote

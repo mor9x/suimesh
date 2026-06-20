@@ -134,6 +134,103 @@ const suiStackClient = createSuiStackMessagingClient(
 
 Then pass `suiStackClient.messaging` into `SuiStackEventTransport`.
 
+## Run The Official Relayer Locally
+
+For live transport tests, SuiMesh can point at the official reference relayer from
+`MystenLabs/sui-stack-messaging`. The relayer is not part of this repository; it is a separate
+HTTP service used by the official messaging SDK.
+
+Clone the official repository and enter its relayer package:
+
+```bash
+git clone https://github.com/MystenLabs/sui-stack-messaging.git
+cd sui-stack-messaging/relayer
+```
+
+Create a relayer `.env` file:
+
+```bash
+cp .env.example .env
+```
+
+For Sui testnet, the minimal `.env` should contain:
+
+```env
+PORT=3000
+SUI_RPC_URL=https://fullnode.testnet.sui.io:443
+GROUPS_PACKAGE_ID=0xba8a26d42bc8b5e5caf4dac2a0f7544128d5dd9b4614af88eec1311ade11de79
+STORAGE_TYPE=memory
+MEMBERSHIP_STORE_TYPE=memory
+WALRUS_PUBLISHER_URL=https://publisher.walrus-testnet.walrus.space
+WALRUS_AGGREGATOR_URL=https://aggregator.walrus-testnet.walrus.space
+WALRUS_STORAGE_EPOCHS=5
+RUST_LOG=messaging_relayer=info
+```
+
+Start the relayer with Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+Or run it in the background:
+
+```bash
+docker compose up -d --build
+docker compose logs -f
+```
+
+Check that the relayer is reachable:
+
+```bash
+curl -fsS http://localhost:3000/health_check
+```
+
+Expected response:
+
+```json
+{"status":"ok"}
+```
+
+Use that relayer from SuiMesh:
+
+```bash
+export SUIMESH_RELAYER_URL=http://localhost:3000
+
+bun run test:live:messaging:remote
+```
+
+The same URL can be used for higher-level live flows:
+
+```bash
+SUIMESH_RELAYER_URL=http://localhost:3000 bun run test:live:business
+SUIMESH_RELAYER_URL=http://localhost:3000 OPENAI_API_KEY=... bun run test:live:full-regression
+```
+
+Common checks:
+
+```text
+Missing X-Signature header:
+  expected if you open protected relayer endpoints directly in a browser.
+  Use /health_check for manual checks. Message endpoints are called by the official SDK with signed requests.
+
+403 or permission errors right after group creation:
+  wait a few seconds and retry. The relayer learns group permissions from Sui Groups events.
+
+Port 3000 already in use:
+  set PORT=3001 in the relayer .env and use SUIMESH_RELAYER_URL=http://localhost:3001.
+
+Container restart:
+  the default official relayer config uses in-memory message and membership storage.
+  A restart can lose unsynced local state. Use persistent infrastructure for production.
+```
+
+Stop the local relayer:
+
+```bash
+docker compose down
+```
+
 ## Test Layers
 
 The binding has two test layers:
