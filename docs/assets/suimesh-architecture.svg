@@ -1,72 +1,73 @@
-<svg width="1200" height="680" viewBox="0 0 1200 680" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+<svg width="1400" height="760" viewBox="0 0 1400 760" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
   <title id="title">SuiMesh architecture</title>
-  <desc id="desc">SuiMesh separates client adapters, protocol SDK, encrypted context storage, and on-chain trace proofs.</desc>
-  <rect width="1200" height="680" rx="28" fill="#F6FAFD"/>
-  <text x="600" y="56" fill="#0B1F33" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="800" text-anchor="middle">SuiMesh Architecture</text>
-  <text x="600" y="88" fill="#4E6478" font-family="Inter, Arial, sans-serif" font-size="18" text-anchor="middle">Communication state stays portable across clients, agents, wallets, and Sui apps.</text>
-
-  <g>
-    <rect x="68" y="140" width="240" height="96" rx="18" fill="#FFFFFF" stroke="#B7C8D8"/>
-    <text x="188" y="178" fill="#14324D" font-family="Inter, Arial, sans-serif" font-size="23" font-weight="800" text-anchor="middle">Clients</text>
-    <text x="188" y="207" fill="#637B8F" font-family="Inter, Arial, sans-serif" font-size="16" text-anchor="middle">Web, CLI, TG, wallets</text>
+  <desc id="desc">SuiMesh separates app adapters, protocol SDK modules, transport, storage, and on-chain trace coordination.</desc>
+  <rect width="1400" height="760" rx="32" fill="#081019"/>
+  <text x="80" y="78" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="38" font-weight="800">Architecture</text>
+  <text x="80" y="112" fill="#94A5B5" font-family="Inter, Arial, sans-serif" font-size="18">A small protocol core with adapters at the edges.</text>
+  <g transform="translate(80 168)">
+    <rect width="260" height="430" rx="24" fill="#101923" stroke="#263847"/>
+    <text x="32" y="48" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="800">Product surface</text>
+    <g transform="translate(32 86)">
+      <rect width="196" height="52" rx="14" fill="#172433"/>
+      <text x="98" y="33" fill="#D6E2EC" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700" text-anchor="middle">Web / CLI</text>
+      <rect y="72" width="196" height="52" rx="14" fill="#172433"/>
+      <text x="98" y="105" fill="#D6E2EC" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700" text-anchor="middle">Wallets</text>
+      <rect y="144" width="196" height="52" rx="14" fill="#172433"/>
+      <text x="98" y="177" fill="#D6E2EC" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700" text-anchor="middle">Agent frameworks</text>
+      <rect y="216" width="196" height="52" rx="14" fill="#172433"/>
+      <text x="98" y="249" fill="#D6E2EC" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700" text-anchor="middle">Sui apps</text>
+    </g>
   </g>
-  <g>
-    <rect x="68" y="292" width="240" height="96" rx="18" fill="#FFFFFF" stroke="#B7C8D8"/>
-    <text x="188" y="330" fill="#14324D" font-family="Inter, Arial, sans-serif" font-size="23" font-weight="800" text-anchor="middle">Agents</text>
-    <text x="188" y="359" fill="#637B8F" font-family="Inter, Arial, sans-serif" font-size="16" text-anchor="middle">Any framework via adapter</text>
+  <g transform="translate(420 134)">
+    <rect width="560" height="498" rx="28" fill="#F8FBFD"/>
+    <text x="40" y="56" fill="#101923" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800">SuiMesh Protocol SDK</text>
+    <text x="40" y="86" fill="#5E7182" font-family="Inter, Arial, sans-serif" font-size="16">Types, encoders, validation, policy, and trace helpers.</text>
+    <g transform="translate(40 128)">
+      <rect width="220" height="74" rx="16" fill="#FFFFFF" stroke="#CCD8E3"/>
+      <text x="110" y="34" fill="#102030" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="800" text-anchor="middle">Protocol types</text>
+      <text x="110" y="56" fill="#667887" font-family="Inter, Arial, sans-serif" font-size="13" text-anchor="middle">events, actions, receipts</text>
+      <rect x="260" width="220" height="74" rx="16" fill="#FFFFFF" stroke="#CCD8E3"/>
+      <text x="370" y="34" fill="#102030" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="800" text-anchor="middle">Codec</text>
+      <text x="370" y="56" fill="#667887" font-family="Inter, Arial, sans-serif" font-size="13" text-anchor="middle">JSON envelope + BCS</text>
+      <rect y="102" width="220" height="74" rx="16" fill="#FFFFFF" stroke="#CCD8E3"/>
+      <text x="110" y="136" fill="#102030" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="800" text-anchor="middle">PTB inspector</text>
+      <text x="110" y="158" fill="#667887" font-family="Inter, Arial, sans-serif" font-size="13" text-anchor="middle">extracts action facts</text>
+      <rect x="260" y="102" width="220" height="74" rx="16" fill="#FFFFFF" stroke="#CCD8E3"/>
+      <text x="370" y="136" fill="#102030" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="800" text-anchor="middle">Policy engine</text>
+      <text x="370" y="158" fill="#667887" font-family="Inter, Arial, sans-serif" font-size="13" text-anchor="middle">approves facts, not prose</text>
+      <rect y="204" width="220" height="74" rx="16" fill="#FFFFFF" stroke="#CCD8E3"/>
+      <text x="110" y="238" fill="#102030" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="800" text-anchor="middle">Trace guard</text>
+      <text x="110" y="260" fill="#667887" font-family="Inter, Arial, sans-serif" font-size="13" text-anchor="middle">anchor, claim, complete</text>
+      <rect x="260" y="204" width="220" height="74" rx="16" fill="#FFFFFF" stroke="#CCD8E3"/>
+      <text x="370" y="238" fill="#102030" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="800" text-anchor="middle">Adapters</text>
+      <text x="370" y="260" fill="#667887" font-family="Inter, Arial, sans-serif" font-size="13" text-anchor="middle">transport, storage, memory</text>
+    </g>
+    <rect x="40" y="442" width="480" height="1" fill="#DAE3EA"/>
+    <text x="40" y="474" fill="#5E7182" font-family="Inter, Arial, sans-serif" font-size="15">Transport-agnostic by design. Sui Stack Messaging is one binding.</text>
   </g>
-  <g>
-    <rect x="68" y="444" width="240" height="96" rx="18" fill="#FFFFFF" stroke="#B7C8D8"/>
-    <text x="188" y="482" fill="#14324D" font-family="Inter, Arial, sans-serif" font-size="23" font-weight="800" text-anchor="middle">Executors</text>
-    <text x="188" y="511" fill="#637B8F" font-family="Inter, Arial, sans-serif" font-size="16" text-anchor="middle">Wallets, bots, services</text>
+  <g transform="translate(1060 168)">
+    <rect width="260" height="430" rx="24" fill="#101923" stroke="#263847"/>
+    <text x="32" y="48" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="800">Network state</text>
+    <g transform="translate(32 92)">
+      <rect width="196" height="76" rx="16" fill="#172433"/>
+      <text x="98" y="34" fill="#D6E2EC" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="800" text-anchor="middle">Relayer</text>
+      <text x="98" y="56" fill="#91A4B4" font-family="Inter, Arial, sans-serif" font-size="13" text-anchor="middle">encrypted delivery</text>
+      <rect y="104" width="196" height="76" rx="16" fill="#172433"/>
+      <text x="98" y="138" fill="#D6E2EC" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="800" text-anchor="middle">Walrus</text>
+      <text x="98" y="160" fill="#91A4B4" font-family="Inter, Arial, sans-serif" font-size="13" text-anchor="middle">context archive</text>
+      <rect y="208" width="196" height="76" rx="16" fill="#172433"/>
+      <text x="98" y="242" fill="#D6E2EC" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="800" text-anchor="middle">Sui</text>
+      <text x="98" y="264" fill="#91A4B4" font-family="Inter, Arial, sans-serif" font-size="13" text-anchor="middle">trace proofs</text>
+    </g>
   </g>
-
-  <g>
-    <rect x="390" y="126" width="420" height="428" rx="28" fill="#10243B" stroke="#1B4C73"/>
-    <text x="600" y="178" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="800" text-anchor="middle">SuiMesh SDK</text>
-    <rect x="438" y="220" width="148" height="62" rx="16" fill="#183D5E"/>
-    <text x="512" y="258" fill="#D9F1FF" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" text-anchor="middle">Codec</text>
-    <rect x="614" y="220" width="148" height="62" rx="16" fill="#183D5E"/>
-    <text x="688" y="258" fill="#D9F1FF" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" text-anchor="middle">Transport</text>
-    <rect x="438" y="312" width="148" height="62" rx="16" fill="#183D5E"/>
-    <text x="512" y="350" fill="#D9F1FF" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" text-anchor="middle">Inspector</text>
-    <rect x="614" y="312" width="148" height="62" rx="16" fill="#183D5E"/>
-    <text x="688" y="350" fill="#D9F1FF" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" text-anchor="middle">Policy</text>
-    <rect x="438" y="404" width="148" height="62" rx="16" fill="#183D5E"/>
-    <text x="512" y="442" fill="#D9F1FF" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" text-anchor="middle">Trace Guard</text>
-    <rect x="614" y="404" width="148" height="62" rx="16" fill="#183D5E"/>
-    <text x="688" y="442" fill="#D9F1FF" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" text-anchor="middle">Storage</text>
-    <text x="600" y="512" fill="#9FC5E2" font-family="Inter, Arial, sans-serif" font-size="17" text-anchor="middle">JSON routes events. BCS proves heavy actions.</text>
+  <path d="M340 382H420" stroke="#5F7386" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M980 382H1060" stroke="#5F7386" stroke-width="3" marker-end="url(#arrow)"/>
+  <g transform="translate(80 660)">
+    <text x="0" y="0" fill="#8EA0B0" font-family="Inter, Arial, sans-serif" font-size="16">Walrus stores encrypted context. Sui proves the trace. Seal controls access.</text>
   </g>
-
-  <g>
-    <rect x="892" y="150" width="240" height="122" rx="20" fill="#E9FFF8" stroke="#43BFA2"/>
-    <text x="1012" y="194" fill="#0D5145" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="800" text-anchor="middle">Walrus</text>
-    <text x="1012" y="225" fill="#287467" font-family="Inter, Arial, sans-serif" font-size="16" text-anchor="middle">Encrypted messages</text>
-    <text x="1012" y="250" fill="#287467" font-family="Inter, Arial, sans-serif" font-size="16" text-anchor="middle">Memory and audit archives</text>
-  </g>
-  <g>
-    <rect x="892" y="342" width="240" height="122" rx="20" fill="#EEF6FF" stroke="#5E9BEA"/>
-    <text x="1012" y="386" fill="#174E8F" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="800" text-anchor="middle">Sui</text>
-    <text x="1012" y="417" fill="#3B6D9E" font-family="Inter, Arial, sans-serif" font-size="16" text-anchor="middle">Ownership, status</text>
-    <text x="1012" y="442" fill="#3B6D9E" font-family="Inter, Arial, sans-serif" font-size="16" text-anchor="middle">Claims and integrity refs</text>
-  </g>
-
-  <path d="M308 188 H390" stroke="#7894AA" stroke-width="3" marker-end="url(#arrow)"/>
-  <path d="M308 340 H390" stroke="#7894AA" stroke-width="3" marker-end="url(#arrow)"/>
-  <path d="M308 492 H390" stroke="#7894AA" stroke-width="3" marker-end="url(#arrow)"/>
-  <path d="M810 248 H892" stroke="#43BFA2" stroke-width="3" marker-end="url(#arrowGreen)"/>
-  <path d="M810 404 H892" stroke="#5E9BEA" stroke-width="3" marker-end="url(#arrowBlue)"/>
-
   <defs>
     <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto">
-      <path d="M0 0 L7 3 L0 6 Z" fill="#7894AA"/>
-    </marker>
-    <marker id="arrowGreen" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto">
-      <path d="M0 0 L7 3 L0 6 Z" fill="#43BFA2"/>
-    </marker>
-    <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto">
-      <path d="M0 0 L7 3 L0 6 Z" fill="#5E9BEA"/>
+      <path d="M0 0 L7 3 L0 6 Z" fill="#5F7386"/>
     </marker>
   </defs>
 </svg>

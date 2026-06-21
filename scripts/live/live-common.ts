@@ -12,9 +12,9 @@ import type {
 export type LiveNetwork = "testnet" | "mainnet" | "devnet" | "localnet";
 export type LiveSigner = Ed25519Keypair | Secp256k1Keypair | Secp256r1Keypair;
 
-export const DEFAULT_RELAYER_URL = "http://localhost:3000";
-export const DEFAULT_TRACE_PACKAGE_ID = "0xd9cdc0dad1bf458037c385656b891d29e63896945e9c9e38eb5d811ae7978257";
-export const DEFAULT_TRACE_REGISTRY_ID = "0xbc6c1df2a86c2737a69e1b4a598826e487c592e38d4130b6af1c47b535d827b4";
+export const DEFAULT_RELAYER_URL = "https://relay.suimesh.link";
+export const DEFAULT_TRACE_PACKAGE_ID = "0x038caadb65def30619e6ec762715ea6ca232ac1195bc077086bc9a6b7e11bb80";
+export const DEFAULT_TRACE_REGISTRY_ID = "0x95c630c93000d9aeb9ff9512ead6209e0568eb327abb489dd5fc7390d034046b";
 export const DEFAULT_WALRUS_PUBLISHER_URL = "https://publisher.walrus-testnet.walrus.space";
 export const DEFAULT_WALRUS_AGGREGATOR_URL = "https://aggregator.walrus-testnet.walrus.space";
 

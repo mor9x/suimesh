@@ -2,7 +2,9 @@
 
 SuiMesh can use `@mysten/sui-stack-messaging` through a transport binding.
 
-The binding stores each SuiMesh event envelope as the plaintext `text` payload passed into `client.messaging.sendMessage(...)`. The official SDK then handles encryption, sender verification, relayer delivery, and recovery support.
+The binding stores each SuiMesh event envelope as the plaintext `text` payload passed into
+`client.messaging.sendMessage(...)`. The official SDK then handles encryption, sender verification,
+relayer delivery, and recovery support.
 
 ## Installed Version
 
@@ -108,7 +110,8 @@ last processed checkpoint / cursor
 
 ## Creating The Official Client
 
-The official SDK composes Sui, Sui Groups, Seal, and the messaging extension. The exact setup depends on network, Seal key servers, and relayer URL.
+The official SDK composes Sui, Sui Groups, Seal, and the messaging extension. The exact setup depends
+on network, Seal key servers, and relayer URL.
 
 ```ts
 import { SuiClient } from "@mysten/sui/client";
@@ -126,13 +129,43 @@ const suiStackClient = createSuiStackMessagingClient(
       sessionKey: { signer },
     },
     relayer: {
-      relayerUrl: "https://your-relayer.example.com",
+      relayerUrl: "https://relay.suimesh.link",
     },
   },
 );
 ```
 
 Then pass `suiStackClient.messaging` into `SuiStackEventTransport`.
+
+## Use The Public Test Relayer
+
+SuiMesh provides a public test relayer for testnet flows:
+
+```bash
+export SUIMESH_RELAYER_URL=https://relay.suimesh.link
+curl -fsS $SUIMESH_RELAYER_URL/health_check
+```
+
+Expected response:
+
+```json
+{"status":"ok"}
+```
+
+Use it from SuiMesh:
+
+```bash
+bun run test:live:messaging:remote
+```
+
+The same URL can be used for higher-level live flows:
+
+```bash
+export SUIMESH_RELAYER_URL=https://relay.suimesh.link
+
+bun run test:live:business
+OPENAI_API_KEY=... bun run test:live:full-regression
+```
 
 ## Run The Official Relayer Locally
 
@@ -277,7 +310,7 @@ disconnects the first client and restores the same event through a new client
 For an external relayer or custom key servers, set:
 
 ```bash
-export SUIMESH_RELAYER_URL=https://your-relayer.example.com
+export SUIMESH_RELAYER_URL=https://relay.suimesh.link
 export SUIMESH_SEAL_SERVER_CONFIGS='[{"objectId":"0x...","weight":1}]'
 export SUIMESH_SUI_PRIVATE_KEY=suiprivkey...
 ```
@@ -285,7 +318,7 @@ export SUIMESH_SUI_PRIVATE_KEY=suiprivkey...
 To force a remote persistent relayer test, run:
 
 ```bash
-export SUIMESH_RELAYER_URL=https://your-relayer.example.com
+export SUIMESH_RELAYER_URL=https://relay.suimesh.link
 bun run test:live:messaging:remote
 ```
 
@@ -343,7 +376,8 @@ epochs unless `SUIMESH_WALRUS_EPOCHS` is set.
 Full business live test:
 
 ```bash
-SUIMESH_RELAYER_URL=http://localhost:3000 bun run test:live:business
+export SUIMESH_RELAYER_URL=https://relay.suimesh.link
+bun run test:live:business
 ```
 
 It creates a real testnet messaging group, sends the SuiMesh light/heavy trace through the official

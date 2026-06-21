@@ -1,65 +1,87 @@
-<svg width="1200" height="500" viewBox="0 0 1200 500" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-  <title id="title">SuiMesh action trace flow</title>
-  <desc id="desc">A heavy action moves from intent to proposal, policy decision, claim, execution receipt, and audit event.</desc>
-  <rect width="1200" height="500" rx="28" fill="#07111F"/>
-  <text x="600" y="58" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="32" font-weight="800" text-anchor="middle">Heavy Action Trace</text>
-  <text x="600" y="90" fill="#A8C4DC" font-family="Inter, Arial, sans-serif" font-size="18" text-anchor="middle">High-stakes actions become recoverable communication state, not hidden backend logs.</text>
-  <g transform="translate(54 160)">
-    <rect width="132" height="76" rx="16" fill="#102843" stroke="#67A9FF"/>
-    <text x="66" y="35" fill="#EAF4FF" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">Intent</text>
-    <text x="66" y="58" fill="#93B7D6" font-family="Inter, Arial, sans-serif" font-size="13" text-anchor="middle">user goal</text>
+<svg width="1400" height="780" viewBox="0 0 1400 780" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">SuiMesh heavy action trace</title>
+  <desc id="desc">A high-impact action moves through a verifiable trace from user intent to audit event.</desc>
+  <rect width="1400" height="780" rx="36" fill="#F7FAFC"/>
+
+  <text x="88" y="82" fill="#0B1620" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="38" font-weight="800">Heavy actions follow a trace</text>
+  <text x="88" y="120" fill="#526577" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="18">The high-impact path keeps each step explicit: proposal, facts, decision, claim, receipt, and audit.</text>
+
+  <g transform="translate(88 168)">
+    <rect width="690" height="584" rx="28" fill="#FFFFFF" stroke="#D3DEE8" stroke-width="2"/>
+    <text x="36" y="52" fill="#0F1E2B" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="24" font-weight="800">Trace timeline</text>
+    <text x="36" y="80" fill="#667789" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="15">Every heavy action is linked by hashes and can be restored later.</text>
+
+    <line x1="70" y1="126" x2="70" y2="500" stroke="#D7E0E8" stroke-width="4" stroke-linecap="round"/>
+
+    <g transform="translate(36 112)">
+      <circle cx="34" cy="24" r="12" fill="#0B1620"/>
+      <rect x="72" width="548" height="48" rx="14" fill="#F8FAFC" stroke="#CAD6E2"/>
+      <text x="96" y="30" fill="#0F1E2B" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="16" font-weight="800">Intent</text>
+      <text x="248" y="30" fill="#657789" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="14">what the user wants</text>
+    </g>
+    <g transform="translate(36 164)">
+      <circle cx="34" cy="24" r="12" fill="#0B1620"/>
+      <rect x="72" width="548" height="48" rx="14" fill="#F8FAFC" stroke="#CAD6E2"/>
+      <text x="96" y="30" fill="#0F1E2B" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="16" font-weight="800">Proposal</text>
+      <text x="248" y="30" fill="#657789" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="14">agent plan and manifest</text>
+    </g>
+    <g transform="translate(36 216)">
+      <circle cx="34" cy="24" r="12" fill="#0B1620"/>
+      <rect x="72" width="548" height="48" rx="14" fill="#F8FAFC" stroke="#CAD6E2"/>
+      <text x="96" y="30" fill="#0F1E2B" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="16" font-weight="800">Sui PTB</text>
+      <text x="248" y="30" fill="#657789" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="14">canonical bytes for the action</text>
+    </g>
+    <g transform="translate(36 268)">
+      <circle cx="34" cy="24" r="12" fill="#0B1620"/>
+      <rect x="72" width="548" height="48" rx="14" fill="#F8FAFC" stroke="#CAD6E2"/>
+      <text x="96" y="30" fill="#0F1E2B" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="16" font-weight="800">Inspect</text>
+      <text x="248" y="30" fill="#657789" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="14">facts extracted from the PTB</text>
+    </g>
+    <g transform="translate(36 320)">
+      <circle cx="34" cy="24" r="12" fill="#0B1620"/>
+      <rect x="72" width="548" height="48" rx="14" fill="#F8FAFC" stroke="#CAD6E2"/>
+      <text x="96" y="30" fill="#0F1E2B" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="16" font-weight="800">PolicyDecision</text>
+      <text x="248" y="30" fill="#657789" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="14">approved, rejected, or confirmation required</text>
+    </g>
+    <g transform="translate(36 372)">
+      <circle cx="34" cy="24" r="12" fill="#0B1620"/>
+      <rect x="72" width="548" height="48" rx="14" fill="#F8FAFC" stroke="#CAD6E2"/>
+      <text x="96" y="30" fill="#0F1E2B" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="16" font-weight="800">ActionClaim</text>
+      <text x="248" y="30" fill="#657789" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="14">executor lock before execution</text>
+    </g>
+    <g transform="translate(36 424)">
+      <circle cx="34" cy="24" r="12" fill="#0B1620"/>
+      <rect x="72" width="548" height="48" rx="14" fill="#F8FAFC" stroke="#CAD6E2"/>
+      <text x="96" y="30" fill="#0F1E2B" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="16" font-weight="800">ExecutionReceipt</text>
+      <text x="248" y="30" fill="#657789" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="14">result, digest, and status</text>
+    </g>
+    <g transform="translate(36 476)">
+      <circle cx="34" cy="24" r="12" fill="#0B1620"/>
+      <rect x="72" width="548" height="48" rx="14" fill="#F8FAFC" stroke="#CAD6E2"/>
+      <text x="96" y="30" fill="#0F1E2B" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="16" font-weight="800">AuditEvent</text>
+      <text x="248" y="30" fill="#657789" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="14">archive refs and recovery metadata</text>
+    </g>
   </g>
-  <g transform="translate(206 160)">
-    <rect width="132" height="76" rx="16" fill="#102843" stroke="#67A9FF"/>
-    <text x="66" y="35" fill="#EAF4FF" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">Proposal</text>
-    <text x="66" y="58" fill="#93B7D6" font-family="Inter, Arial, sans-serif" font-size="13" text-anchor="middle">agent plan</text>
+
+  <g transform="translate(834 168)">
+    <rect width="478" height="154" rx="24" fill="#081019"/>
+    <text x="32" y="46" fill="#FFFFFF" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="22" font-weight="800">Event stream</text>
+    <text x="32" y="82" fill="#AAB7C3" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="16">Signed SuiMesh envelopes move through</text>
+    <text x="32" y="108" fill="#AAB7C3" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="16">a transport adapter. The current live</text>
+    <text x="32" y="134" fill="#AAB7C3" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="16">binding uses Sui Stack Messaging.</text>
   </g>
-  <g transform="translate(358 160)">
-    <rect width="132" height="76" rx="16" fill="#102843" stroke="#67A9FF"/>
-    <text x="66" y="35" fill="#EAF4FF" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">PTB</text>
-    <text x="66" y="58" fill="#93B7D6" font-family="Inter, Arial, sans-serif" font-size="13" text-anchor="middle">source of truth</text>
+  <g transform="translate(834 354)">
+    <rect width="478" height="154" rx="24" fill="#081019"/>
+    <text x="32" y="46" fill="#FFFFFF" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="22" font-weight="800">Walrus archive</text>
+    <text x="32" y="82" fill="#AAB7C3" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="16">Encrypted context, memory snapshots,</text>
+    <text x="32" y="108" fill="#AAB7C3" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="16">simulation output, execution reports,</text>
+    <text x="32" y="134" fill="#AAB7C3" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="16">and audit detail.</text>
   </g>
-  <g transform="translate(510 160)">
-    <rect width="132" height="76" rx="16" fill="#102843" stroke="#46D5B5"/>
-    <text x="66" y="35" fill="#EAF4FF" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">Inspect</text>
-    <text x="66" y="58" fill="#93B7D6" font-family="Inter, Arial, sans-serif" font-size="13" text-anchor="middle">facts</text>
+  <g transform="translate(834 540)">
+    <rect width="478" height="154" rx="24" fill="#081019"/>
+    <text x="32" y="46" fill="#FFFFFF" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="22" font-weight="800">Sui trace guard</text>
+    <text x="32" y="82" fill="#AAB7C3" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="16">Anchors action hashes, coordinates</text>
+    <text x="32" y="108" fill="#AAB7C3" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="16">claims, records status, and emits</text>
+    <text x="32" y="134" fill="#AAB7C3" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif" font-size="16">events for recovery.</text>
   </g>
-  <g transform="translate(662 160)">
-    <rect width="132" height="76" rx="16" fill="#102843" stroke="#46D5B5"/>
-    <text x="66" y="35" fill="#EAF4FF" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">Policy</text>
-    <text x="66" y="58" fill="#93B7D6" font-family="Inter, Arial, sans-serif" font-size="13" text-anchor="middle">decision</text>
-  </g>
-  <g transform="translate(814 160)">
-    <rect width="132" height="76" rx="16" fill="#102843" stroke="#F6C85F"/>
-    <text x="66" y="35" fill="#EAF4FF" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">Claim</text>
-    <text x="66" y="58" fill="#93B7D6" font-family="Inter, Arial, sans-serif" font-size="13" text-anchor="middle">executor lock</text>
-  </g>
-  <g transform="translate(966 160)">
-    <rect width="132" height="76" rx="16" fill="#102843" stroke="#F6C85F"/>
-    <text x="66" y="35" fill="#EAF4FF" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">Receipt</text>
-    <text x="66" y="58" fill="#93B7D6" font-family="Inter, Arial, sans-serif" font-size="13" text-anchor="middle">execution proof</text>
-  </g>
-  <g>
-    <path d="M186 198 H206" stroke="#8AA8C0" stroke-width="3" marker-end="url(#arrow)"/>
-    <path d="M338 198 H358" stroke="#8AA8C0" stroke-width="3" marker-end="url(#arrow)"/>
-    <path d="M490 198 H510" stroke="#8AA8C0" stroke-width="3" marker-end="url(#arrow)"/>
-    <path d="M642 198 H662" stroke="#8AA8C0" stroke-width="3" marker-end="url(#arrow)"/>
-    <path d="M794 198 H814" stroke="#8AA8C0" stroke-width="3" marker-end="url(#arrow)"/>
-    <path d="M946 198 H966" stroke="#8AA8C0" stroke-width="3" marker-end="url(#arrow)"/>
-  </g>
-  <g>
-    <rect x="254" y="330" width="278" height="68" rx="18" fill="#0D332F" stroke="#46D5B5"/>
-    <text x="393" y="357" fill="#D6FFF4" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">Walrus</text>
-    <text x="393" y="381" fill="#9FE8D8" font-family="Inter, Arial, sans-serif" font-size="14" text-anchor="middle">encrypted details and audit archive</text>
-    <rect x="668" y="330" width="278" height="68" rx="18" fill="#0E2A49" stroke="#67A9FF"/>
-    <text x="807" y="357" fill="#DDEEFF" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" text-anchor="middle">Sui</text>
-    <text x="807" y="381" fill="#A9CFFF" font-family="Inter, Arial, sans-serif" font-size="14" text-anchor="middle">refs, hashes, status, claim state</text>
-  </g>
-  <path d="M393 330 C392 286 424 254 424 236" stroke="#46D5B5" stroke-width="3" stroke-dasharray="8 8"/>
-  <path d="M807 330 C805 282 880 254 880 236" stroke="#67A9FF" stroke-width="3" stroke-dasharray="8 8"/>
-  <defs>
-    <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto">
-      <path d="M0 0 L7 3 L0 6 Z" fill="#8AA8C0"/>
-    </marker>
-  </defs>
 </svg>

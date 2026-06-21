@@ -334,8 +334,14 @@ discovery, see [Sui Stack Messaging transport binding](sui-stack-messaging.md).
 
 Live scripts exercise real infrastructure, spend gas, and depend on external services.
 
-For remote messaging recovery tests, first start an official Sui Stack Messaging relayer and point
-SuiMesh at it:
+Remote messaging recovery tests use the public SuiMesh test relayer by default:
+
+```bash
+export SUIMESH_RELAYER_URL=https://relay.suimesh.link
+curl -fsS $SUIMESH_RELAYER_URL/health_check
+```
+
+You can also run the official Sui Stack Messaging relayer yourself and point SuiMesh at it:
 
 ```bash
 git clone https://github.com/MystenLabs/sui-stack-messaging.git
@@ -358,15 +364,36 @@ If a browser request returns `Missing X-Signature header`, that means a protecte
 was opened directly. Use `/health_check` for manual checks; message endpoints are called by the SDK
 with signed requests.
 
+The current public SuiMesh trace package on Sui testnet is:
+
 ```bash
+export SUIMESH_TRACE_PACKAGE_ID=0x038caadb65def30619e6ec762715ea6ca232ac1195bc077086bc9a6b7e11bb80
+```
+
+The hosted demo registry is:
+
+```bash
+export SUIMESH_TRACE_REGISTRY_ID=0x95c630c93000d9aeb9ff9512ead6209e0568eb327abb489dd5fc7390d034046b
+```
+
+The package is reusable by any app. The hosted registry is owned by the demo operator, so apps using
+their own signer should create their own shared registry:
+
+```bash
+bun run scripts/live/create-trace-registry-live.ts $SUIMESH_TRACE_PACKAGE_ID
+```
+
+```bash
+export SUIMESH_RELAYER_URL=https://relay.suimesh.link
+
 bun run test:live:messaging
-SUIMESH_RELAYER_URL=http://localhost:3000 bun run test:live:messaging:remote
-OPENAI_API_KEY=... SUIMESH_OPENAI_MODEL=gpt-5.5 SUIMESH_RELAYER_URL=http://localhost:3000 bun run test:live:agent-proposal
-SUIMESH_GROUP_UUID=... SUIMESH_RELAYER_URL=http://localhost:3000 bun run test:live:agent-proposal:verify
+bun run test:live:messaging:remote
+OPENAI_API_KEY=... SUIMESH_OPENAI_MODEL=gpt-5.5 bun run test:live:agent-proposal
+SUIMESH_GROUP_UUID=... bun run test:live:agent-proposal:verify
 bun run test:live:heavy
 bun run test:live:walrus
-SUIMESH_RELAYER_URL=http://localhost:3000 bun run test:live:business
-SUIMESH_RELAYER_URL=http://localhost:3000 OPENAI_API_KEY=... bun run test:live:full-regression
+bun run test:live:business
+OPENAI_API_KEY=... bun run test:live:full-regression
 ```
 
 `test:live:agent-proposal` creates a real messaging group, sends a user message through the transport,

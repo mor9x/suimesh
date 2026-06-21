@@ -22,6 +22,7 @@ import {
 } from "../../src/index.ts";
 import {
   createLiveSuiClient,
+  DEFAULT_RELAYER_URL,
   liveNetwork,
   resolveSealServerConfigs,
   resolveSealThreshold,
@@ -340,8 +341,8 @@ const sealThreshold = resolveSealThreshold(sealServerConfigs);
 const signer = await resolveSigner();
 const sessionId = process.env.SUIMESH_GROUP_UUID ?? `suimesh-live-${crypto.randomUUID()}`;
 const groupName = process.env.SUIMESH_GROUP_NAME ?? `SuiMesh live ${new Date().toISOString()}`;
-const requestedRelayerUrl = process.env.SUIMESH_RELAYER_URL;
 const requireRemoteRelayer = process.env.SUIMESH_REQUIRE_REMOTE_RELAYER === "1";
+const requestedRelayerUrl = process.env.SUIMESH_RELAYER_URL ?? (requireRemoteRelayer ? DEFAULT_RELAYER_URL : undefined);
 if (requireRemoteRelayer && !requestedRelayerUrl) {
   throw new Error("SUIMESH_REQUIRE_REMOTE_RELAYER=1 requires SUIMESH_RELAYER_URL");
 }
@@ -382,10 +383,14 @@ const sessionDiscovery = new SuiStackSessionDiscovery({
   suiClient: baseClient as unknown as SuiEventQueryClient,
   eventTypes: membershipEventTypesFromSuiStackClient(stackClient),
   metadataView: stackClient.messaging.view,
-  maxPagesPerEventType: Number(process.env.SUIMESH_SESSION_DISCOVERY_MAX_PAGES ?? process.env.SUIMESH_INBOX_MAX_PAGES ?? 20)
+  maxPagesPerEventType: Number(
+    process.env.SUIMESH_SESSION_DISCOVERY_MAX_PAGES ?? process.env.SUIMESH_INBOX_MAX_PAGES ?? 20
+  )
 });
 const discoveryResult = await waitForDiscoveredSession(sessionDiscovery, resolvedGroup.groupId);
-const discoveredTargetSession = discoveryResult.activeSessions.find((session) => session.groupId === resolvedGroup.groupId);
+const discoveredTargetSession = discoveryResult.activeSessions.find(
+  (session) => session.groupId === resolvedGroup.groupId
+);
 
 const adapter = new SuiStackEventTransport({
   client: stackClient.messaging,
