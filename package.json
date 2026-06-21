@@ -1,10 +1,47 @@
 {
   "name": "suimesh",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "type": "module",
-  "description": "SuiMesh v0.1 protocol SDK: agent action communication state on Sui.",
+  "description": "Agent Action Communication Protocol on Sui.",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/mor9x/suimesh.git"
+  },
+  "homepage": "https://github.com/mor9x/suimesh#readme",
+  "bugs": {
+    "url": "https://github.com/mor9x/suimesh/issues"
+  },
+  "keywords": [
+    "sui",
+    "walrus",
+    "seal",
+    "agent",
+    "protocol",
+    "ptb",
+    "messaging"
+  ],
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "docs",
+    "examples/minimal",
+    "contracts/suimesh_trace/Move.toml",
+    "contracts/suimesh_trace/Published.toml",
+    "contracts/suimesh_trace/sources"
+  ],
   "scripts": {
+    "build": "bun run scripts/build.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
     "check": "bun run typecheck && bun test",
@@ -19,7 +56,10 @@
     "test:live:business": "bun run scripts/live/full-business-live.ts",
     "test:live:agent-proposal": "bun run scripts/live/openai-agent-proposal-live.ts",
     "test:live:agent-proposal:verify": "bun run scripts/live/verify-agent-proposal-live.ts",
-    "test:live:full-regression": "bun run scripts/live/full-regression-live.ts"
+    "test:live:full-regression": "bun run scripts/live/full-regression-live.ts",
+    "prepack": "bun run build",
+    "prepublishOnly": "bun run check:strict && bun run build",
+    "pack:dry": "npm pack --dry-run"
   },
   "dependencies": {
     "@mysten/bcs": "2.0.5",
